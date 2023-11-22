@@ -5,8 +5,10 @@ class Jugador(
     var fichas: Int,
     var mano: MutableList<Carta>,
     ) {
+    var plantado: Boolean
     init{
         this.fichas = 5
+        this.plantado = false
     }
 
     fun addCarta(carta: Carta){

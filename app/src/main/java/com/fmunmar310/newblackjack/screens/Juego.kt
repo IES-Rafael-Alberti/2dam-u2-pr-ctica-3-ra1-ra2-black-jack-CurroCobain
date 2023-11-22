@@ -58,6 +58,8 @@ fun Juego(){
     var puntos2 by rememberSaveable { mutableStateOf(0) }
     val jugador1 = Jugador("jugador1", puntos1, lista1)
     val jugador2 = Jugador("jugador2", puntos2, lista2)
+    val banca = Jugador("banca", 0, mutableListOf())
+    var victoria by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     var micarta : Carta
     var cartaMostrar by rememberSaveable { mutableStateOf("reverso") }
@@ -115,8 +117,16 @@ fun Juego(){
                     micarta = miBaraja.cogerCarta()!!
                     jugador1.addCarta(micarta)
                     puntos1 = jugador1.calculaPuntos()
+                    /* REVISAR NO FUNCIONA
+                    victoria = winBet(jugador1, jugador2, banca, apuesta)
+                    if (victoria){
+                        winBet(jugador1, jugador2, banca, apuesta)
+                        }
+
+                     */
                     },
-                onPass = {},
+                onPass = { jugador1.plantado = true
+                         },
                 onBet = {jugador1.apuesta(1)
                 apuesta++})
             // --------------------- botones jugador2 ---------------------------
@@ -125,8 +135,16 @@ fun Juego(){
                     micarta = miBaraja.cogerCarta()!!
                     jugador2.addCarta(micarta)
                     puntos2 = jugador2.calculaPuntos()
+                    /* REVISAR NO FUNCIONA
+                    victoria = winBet(jugador1, jugador2, banca, apuesta)
+                    if (victoria){
+                        winBet(jugador1, jugador2, banca, apuesta)
+                        }
+
+                     */
                     },
-                onPass = {},
+                onPass = {jugador2.plantado = true
+                         },
                 onBet = {jugador2.apuesta(1)
                 apuesta++})
         }
@@ -276,3 +294,44 @@ fun MuestraStats(
         )
     }
 }
+/*  REVISAR PORQUE NO FUNCIONA
+fun winBet(jug1: Jugador, jug2: Jugador, banca: Jugador, apuesta: Int):Boolean
+{
+    var winner = false
+    if(jug1.plantado && jug2.plantado){
+        val pts1 = jug1.calculaPuntos()
+        val pts2 = jug2.calculaPuntos()
+        if(pts1 > 21  && pts2 < 21){
+            jug2.ganaApuesta(apuesta)
+            winner = true
+        }else if( pts1 < 21 && pts2 > 21){
+            winner = true
+            jug1.ganaApuesta(apuesta)
+        }else if (pts1 < 21 && pts2 < 21){
+            if(21 - pts1 > 21 - pts2){
+                winner = true
+                jug2.ganaApuesta(apuesta)
+            }else if(21 - pts1 < 21 - pts2){
+                winner = true
+                jug1.ganaApuesta(apuesta)
+            }
+        }else if(pts1 == 21){
+            winner = true
+            jug1.ganaApuesta(apuesta)
+        }else if(pts2 == 21){
+            winner = true
+            jug2.ganaApuesta(apuesta)
+        }else{
+            winner = false
+            banca.ganaApuesta(apuesta)
+        }
+    }else{
+        winner = false
+        banca.ganaApuesta(apuesta)
+    }
+    return winner
+}
+
+HAY QUE REVISAR APUESTAS PORQUE NO ACTUALIZA EL VALOR DE LAS FICHAS DE LOS JUGADORES
+NO SALTA CUANDO HAY UN GANADOR
+ */
