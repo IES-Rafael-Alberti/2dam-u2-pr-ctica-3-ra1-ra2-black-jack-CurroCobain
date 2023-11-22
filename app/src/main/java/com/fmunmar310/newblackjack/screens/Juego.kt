@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,7 +18,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,7 +52,6 @@ import com.fmunmar310.newblackjack.clases.*
 @Composable
 fun Juego(){
     // inicializamos las variables
-    var pintaPantalla by rememberSaveable { mutableStateOf(0) }
     val lista1 by rememberSaveable { mutableStateOf(mutableListOf<Carta>()) }
     val lista2 by rememberSaveable { mutableStateOf(mutableListOf<Carta>()) }
     var puntos1 by rememberSaveable { mutableStateOf(0) }
@@ -60,7 +62,8 @@ fun Juego(){
     var micarta : Carta
     var cartaMostrar by rememberSaveable { mutableStateOf("reverso") }
     val miBaraja = Baraja
-    val puntos by rememberSaveable { mutableStateOf(0) }
+    var apuesta by rememberSaveable { mutableStateOf(0) }
+    // ---------------------------------- Columna principal ------------
     Column( modifier = Modifier
         .fillMaxSize()
         .paint(
@@ -69,81 +72,86 @@ fun Juego(){
         ),
         horizontalAlignment = Alignment.CenterHorizontally)
     {
-        Row(
+        Row(  // ------------------- Fila cartas y puntos --------------------
             Modifier
                 .padding(top = 20.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
-        ){
+        ){//
+            // --------------------- Columna jugador1 ------------------
             Column(modifier = Modifier
-                .fillMaxHeight(0.7f)
+                .fillMaxHeight(0.65f)
                 .fillMaxWidth(0.5f),
                 horizontalAlignment = Alignment.CenterHorizontally)
             {
                 MuestraMano(jugador = jugador1, context)
+                MuestraStats(jugador = jugador1)
+
             }
+            // --------------------- Columna jugador2 -------------------
             Column(modifier = Modifier
-                .fillMaxHeight(0.7f)
+                .fillMaxHeight(0.65f)
                 .fillMaxWidth(1f),
                 horizontalAlignment = Alignment.CenterHorizontally)
             {
                 MuestraMano(jugador = jugador2, context)
+                MuestraStats(jugador = jugador2)
             }
         }
-        Column(
-            Modifier
-                .padding(top = 10.dp)
-                .fillMaxWidth(),
-        ) {
-            Text(
-                text = jugador1.calculaPuntos().toString(),
+        Row(modifier = Modifier.align(alignment = Alignment.CenterHorizontally)){
+            Text(text = "Bote $apuesta",
                 fontSize = 20.sp,
-                modifier = Modifier.align(Alignment.CenterHorizontally)
-            )
-            Row(
-                Modifier
-                    .padding(top = 5.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                // Botones de dame carta y pasar
-                Button(modifier = Modifier.wrapContentSize(),
-                    onClick = {
-                        micarta = miBaraja.cogerCarta()!!
-                        jugador1.addCarta(micarta)
-                        puntos1 = jugador1.calculaPuntos()}
-                ) {
-                    Text(text = "Dame una carta ")
-                }
-            }
-            Row(
-                Modifier
-                    .padding(top = 5.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Button(modifier = Modifier.wrapContentSize(),
-                    onClick = {  }
-                ) {
-                    Text("Pasar ")
-                }
-            }
+                modifier = Modifier
+                    .background(Color.Gray)
+                )
+        }
+        // ------------------------- fila botones --------------------------------
+        Row(modifier = Modifier
+            .fillMaxHeight()
+            .fillMaxWidth()){
+            // --------------------- botones jugador1 ---------------------------
+            JuegaJugador(0.5f,
+                onDameCartaClick = {
+                    micarta = miBaraja.cogerCarta()!!
+                    jugador1.addCarta(micarta)
+                    puntos1 = jugador1.calculaPuntos()
+                    },
+                onPass = {},
+                onBet = {jugador1.apuesta(1)
+                apuesta++})
+            // --------------------- botones jugador2 ---------------------------
+            JuegaJugador(1f,
+                onDameCartaClick = {
+                    micarta = miBaraja.cogerCarta()!!
+                    jugador2.addCarta(micarta)
+                    puntos2 = jugador2.calculaPuntos()
+                    },
+                onPass = {},
+                onBet = {jugador2.apuesta(1)
+                apuesta++})
         }
     }
 }
+
+/**
+ * Función composable que muestra  el nombre  y las cartas de la mano del jugador
+ */
 @Composable
 fun MuestraMano(jugador: Jugador, context:Context) {
     var x = 0.dp
     var y = 0.dp
+    // generamos un box
     Box(modifier = Modifier
-        .fillMaxHeight(0.7f) // generamos un box
+        .fillMaxHeight(0.7f)
         .fillMaxWidth()) {
-        Text(text = "Jugador 2",
+        Text(text = jugador.nombre,
             fontSize = 20.sp,
             modifier = Modifier
                 .background(Color.Gray)
                 .align(alignment = Alignment.TopCenter))
-        for (i in jugador.mano) { // por cada carta generamos otro box que va a tener una imagen dentro
+        Spacer(modifier = Modifier.padding(top = 20.dp))
+        for (i in jugador.mano) {
+            // por cada carta generamos otro box que va a tener una imagen dentro
             Box(modifier = Modifier
                 .clip(shape = MaterialTheme.shapes.medium)
                 .offset(
@@ -172,32 +180,32 @@ fun MuestraMano(jugador: Jugador, context:Context) {
         }
     }
 }
-/*
+
+/**
+ * Función composable con tres botones para pedir carta, subir la apuesta o plantarse
+ */
 @Composable
 fun JuegaJugador(
     ancho: Float,
-    points: Int,
     onDameCartaClick: () -> Unit,
+    onBet: () -> Unit,
     onPass: () -> Unit
     ) {
     Column(
         Modifier
-            .padding(top = 10.dp)
+            .padding(top = 20.dp)
             .fillMaxWidth(ancho),
     ) {
-        Text(
-            text = points.toString(),
-            fontSize = 20.sp,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
-        )
         Row(
             Modifier
                 .padding(top = 5.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            // Botones de dame carta y pasar
+            // --------------------------- Botón de dame carta ----------------------------
             Button(modifier = Modifier.wrapContentSize(),
+                colors = ButtonDefaults.buttonColors(Color.Black),
+                shape = CutCornerShape(5.dp),
                 onClick = { onDameCartaClick() }
             ) {
                 Text(text = "Dame una carta ")
@@ -209,13 +217,62 @@ fun JuegaJugador(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
+            // --------------------------- Botón para subir apuesta ----------------------------
             Button(modifier = Modifier.wrapContentSize(),
-                onClick = { onPass() }
+                colors = ButtonDefaults.buttonColors(Color.Black),
+                shape = CutCornerShape(5.dp),
+                onClick = { onBet() }
             ) {
-                Text("Pasar ")
+                Text("Subir apuesta ")
+            }
+        }
+            Row(
+                Modifier
+                    .padding(top = 5.dp)
+                    .fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                // --------------------------- Botón para plantarse ----------------------------
+                Button(modifier = Modifier.wrapContentSize(),
+                    colors = ButtonDefaults.buttonColors(Color.Black),
+                    shape = CutCornerShape(5.dp),
+                    onClick = { onPass() }
+                ) {
+                    Text("Plantarse ")
+                }
             }
         }
     }
-}
 
+/**
+ * Función composable que muestra los puntos y las fichas de cada jugador
  */
+@Composable
+fun MuestraStats(
+    jugador: Jugador
+){
+    Row(
+        Modifier
+            .padding(top = 40.dp)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ){
+        Text(text = "Puntos ${jugador.calculaPuntos()}",
+            fontSize = 20.sp,
+            modifier = Modifier
+                .background(Color.Gray)
+        )
+    }
+    Row(
+        Modifier
+            .padding(top = 10.dp)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ){
+        Text(text = "Fichas ${jugador.fichas}",
+            fontSize = 20.sp,
+            modifier = Modifier
+                .background(Color.Gray)
+        )
+    }
+}

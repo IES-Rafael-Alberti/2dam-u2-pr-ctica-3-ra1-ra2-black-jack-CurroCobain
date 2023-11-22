@@ -1,8 +1,13 @@
 package com.fmunmar310.newblackjack.clases
 
-class Jugador(var nombre: String,
-              var fichas: Int,
-              var mano: MutableList<Carta>) {
+class Jugador(
+    var nombre: String,
+    var fichas: Int,
+    var mano: MutableList<Carta>,
+    ) {
+    init{
+        this.fichas = 5
+    }
 
     fun addCarta(carta: Carta){
         this.mano.add(carta)
