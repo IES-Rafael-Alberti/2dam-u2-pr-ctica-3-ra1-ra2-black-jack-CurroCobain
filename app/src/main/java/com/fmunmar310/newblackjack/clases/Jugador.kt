@@ -1,4 +1,6 @@
 package com.fmunmar310.newblackjack.clases
+/*
+CLASE NO USADA EN ESTA VERSION
 
 class Jugador(
     var nombre: String,
@@ -33,4 +35,7 @@ class Jugador(
         }
         return puntos
     }
-}
+
+ */
+
+

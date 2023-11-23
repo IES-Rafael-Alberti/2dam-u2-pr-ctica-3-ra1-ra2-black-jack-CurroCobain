@@ -1,39 +1,22 @@
 package com.fmunmar310.newblackjack.screens
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.graphics.drawable.Drawable
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.paint
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -42,13 +25,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import com.fmunmar310.newblackjack.R
 import com.fmunmar310.newblackjack.clases.*
 
 // Función principal del juego
 @Preview (showBackground = true)
-@SuppressLint("DiscouragedApi")
+@SuppressLint("DiscouragedApi", "MutableCollectionMutableState")
 @Composable
 fun Juego(){
     // inicializamos las variables
@@ -56,10 +38,17 @@ fun Juego(){
     val lista2 by rememberSaveable { mutableStateOf(mutableListOf<Carta>()) }
     var puntos1 by rememberSaveable { mutableStateOf(0) }
     var puntos2 by rememberSaveable { mutableStateOf(0) }
-    val jugador1 = Jugador("jugador1", puntos1, lista1)
-    val jugador2 = Jugador("jugador2", puntos2, lista2)
-    val banca = Jugador("banca", 0, mutableListOf())
-    var victoria by rememberSaveable { mutableStateOf(false) }
+    var nombre1 by rememberSaveable { mutableStateOf("jugador1") }
+    var nombre2 by rememberSaveable { mutableStateOf("jugador2") }
+    var fichas1 by rememberSaveable { mutableStateOf(5) }
+    var fichas2 by rememberSaveable { mutableStateOf(5) }
+    val banca by rememberSaveable { mutableStateOf(0) }
+    var plantado1 by rememberSaveable { mutableStateOf(false) }
+    var plantado2 by rememberSaveable { mutableStateOf(false) }
+    //val jugador1 = Jugador("jugador1", puntos1, lista1) ------ para la versión con objetos --------
+    //val jugador2 = Jugador("jugador2", puntos2, lista2) ------ para la versión con objetos --------
+    var victoria1 by rememberSaveable { mutableStateOf(false) }
+    var victoria2 by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     var micarta : Carta
     var cartaMostrar by rememberSaveable { mutableStateOf("reverso") }
@@ -86,8 +75,8 @@ fun Juego(){
                 .fillMaxWidth(0.5f),
                 horizontalAlignment = Alignment.CenterHorizontally)
             {
-                MuestraMano(jugador = jugador1, context)
-                MuestraStats(jugador = jugador1)
+                MuestraMano(lista1, nombre1, context)
+                MuestraStats(lista1, fichas1)
 
             }
             // --------------------- Columna jugador2 -------------------
@@ -96,8 +85,8 @@ fun Juego(){
                 .fillMaxWidth(1f),
                 horizontalAlignment = Alignment.CenterHorizontally)
             {
-                MuestraMano(jugador = jugador2, context)
-                MuestraStats(jugador = jugador2)
+                MuestraMano(lista2, nombre2, context)
+                MuestraStats(lista2, fichas2)
             }
         }
         Row(modifier = Modifier.align(alignment = Alignment.CenterHorizontally)){
@@ -115,8 +104,10 @@ fun Juego(){
             JuegaJugador(0.5f,
                 onDameCartaClick = {
                     micarta = miBaraja.cogerCarta()!!
-                    jugador1.addCarta(micarta)
-                    puntos1 = jugador1.calculaPuntos()
+                    lista1.add(micarta)
+                    puntos1 = calculaPuntos(lista1)
+                    //jugador1.addCarta(micarta) ---versión objetos---
+                    //puntos1 = jugador1.calculaPuntos() ---versión objetos ----
                     /* REVISAR NO FUNCIONA
                     victoria = winBet(jugador1, jugador2, banca, apuesta)
                     if (victoria){
@@ -125,16 +116,16 @@ fun Juego(){
 
                      */
                     },
-                onPass = { jugador1.plantado = true
+                onPass = { plantado1 = true
                          },
-                onBet = {jugador1.apuesta(1)
-                apuesta++})
+                onBet = {fichas1--
+                        apuesta++})
             // --------------------- botones jugador2 ---------------------------
             JuegaJugador(1f,
                 onDameCartaClick = {
                     micarta = miBaraja.cogerCarta()!!
-                    jugador2.addCarta(micarta)
-                    puntos2 = jugador2.calculaPuntos()
+                    lista2.add(micarta)
+                    puntos2 = calculaPuntos(lista2)
                     /* REVISAR NO FUNCIONA
                     victoria = winBet(jugador1, jugador2, banca, apuesta)
                     if (victoria){
@@ -143,195 +134,47 @@ fun Juego(){
 
                      */
                     },
-                onPass = {jugador2.plantado = true
+                onPass = {plantado2 = true
                          },
-                onBet = {jugador2.apuesta(1)
-                apuesta++})
+                onBet = {fichas2--
+                        apuesta++})
         }
     }
 }
-
 /**
- * Función composable que muestra  el nombre  y las cartas de la mano del jugador
+ * @return devuelve un int que indica el ganador de la partida
+ * 1 -> jugador 1 gana
+ * 2 -> jugador 2 gana
+ * 3 -> banca gana
  */
-@Composable
-fun MuestraMano(jugador: Jugador, context:Context) {
-    var x = 0.dp
-    var y = 0.dp
-    // generamos un box
-    Box(modifier = Modifier
-        .fillMaxHeight(0.7f)
-        .fillMaxWidth()) {
-        Text(text = jugador.nombre,
-            fontSize = 20.sp,
-            modifier = Modifier
-                .background(Color.Gray)
-                .align(alignment = Alignment.TopCenter))
-        Spacer(modifier = Modifier.padding(top = 20.dp))
-        for (i in jugador.mano) {
-            // por cada carta generamos otro box que va a tener una imagen dentro
-            Box(modifier = Modifier
-                .clip(shape = MaterialTheme.shapes.medium)
-                .offset(
-                    x,
-                    y
-                ) // Esto recoloca el Box en diagonal al anterior cambiando las variables "x" e "y"
-                .fillMaxWidth()
-                .fillMaxHeight()
-                ) {
-                Image( // Esta es la imagen de la carta
-                    painter = painterResource(
-                        id = context.resources.getIdentifier(
-                            "c" + i.idDrawable.toString(),
-                            "drawable",
-                            context.packageName
-                        )
-                    ),
-                    contentDescription = "Carta mostrada",
-                    modifier = Modifier
-                        .height(150.dp)
-                        .width(75.dp)
-                )
-                x += 15.dp //aumentamos el valor de x
-                y += 15.dp // aumentamos el valor de y
-            }
-        }
-    }
-}
-
-/**
- * Función composable con tres botones para pedir carta, subir la apuesta o plantarse
- */
-@Composable
-fun JuegaJugador(
-    ancho: Float,
-    onDameCartaClick: () -> Unit,
-    onBet: () -> Unit,
-    onPass: () -> Unit
-    ) {
-    Column(
-        Modifier
-            .padding(top = 20.dp)
-            .fillMaxWidth(ancho),
-    ) {
-        Row(
-            Modifier
-                .padding(top = 5.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            // --------------------------- Botón de dame carta ----------------------------
-            Button(modifier = Modifier.wrapContentSize(),
-                colors = ButtonDefaults.buttonColors(Color.Black),
-                shape = CutCornerShape(5.dp),
-                onClick = { onDameCartaClick() }
-            ) {
-                Text(text = "Dame una carta ")
-            }
-        }
-        Row(
-            Modifier
-                .padding(top = 5.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            // --------------------------- Botón para subir apuesta ----------------------------
-            Button(modifier = Modifier.wrapContentSize(),
-                colors = ButtonDefaults.buttonColors(Color.Black),
-                shape = CutCornerShape(5.dp),
-                onClick = { onBet() }
-            ) {
-                Text("Subir apuesta ")
-            }
-        }
-            Row(
-                Modifier
-                    .padding(top = 5.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                // --------------------------- Botón para plantarse ----------------------------
-                Button(modifier = Modifier.wrapContentSize(),
-                    colors = ButtonDefaults.buttonColors(Color.Black),
-                    shape = CutCornerShape(5.dp),
-                    onClick = { onPass() }
-                ) {
-                    Text("Plantarse ")
-                }
-            }
-        }
-    }
-
-/**
- * Función composable que muestra los puntos y las fichas de cada jugador
- */
-@Composable
-fun MuestraStats(
-    jugador: Jugador
-){
-    Row(
-        Modifier
-            .padding(top = 40.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ){
-        Text(text = "Puntos ${jugador.calculaPuntos()}",
-            fontSize = 20.sp,
-            modifier = Modifier
-                .background(Color.Gray)
-        )
-    }
-    Row(
-        Modifier
-            .padding(top = 10.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ){
-        Text(text = "Fichas ${jugador.fichas}",
-            fontSize = 20.sp,
-            modifier = Modifier
-                .background(Color.Gray)
-        )
-    }
-}
-/*  REVISAR PORQUE NO FUNCIONA
-fun winBet(jug1: Jugador, jug2: Jugador, banca: Jugador, apuesta: Int):Boolean
+fun winBet(puntos1: Int, puntos2: Int, plantado1: Boolean, plantado2: Boolean): Int
 {
-    var winner = false
-    if(jug1.plantado && jug2.plantado){
-        val pts1 = jug1.calculaPuntos()
-        val pts2 = jug2.calculaPuntos()
-        if(pts1 > 21  && pts2 < 21){
-            jug2.ganaApuesta(apuesta)
-            winner = true
-        }else if( pts1 < 21 && pts2 > 21){
-            winner = true
-            jug1.ganaApuesta(apuesta)
-        }else if (pts1 < 21 && pts2 < 21){
-            if(21 - pts1 > 21 - pts2){
-                winner = true
-                jug2.ganaApuesta(apuesta)
-            }else if(21 - pts1 < 21 - pts2){
-                winner = true
-                jug1.ganaApuesta(apuesta)
+    var winner = 0
+    if(plantado1 && plantado2){
+        if(puntos1 > 21  && puntos2 < 21){
+            winner = 2
+        }else if( puntos1 < 21 && puntos2 > 21){
+            winner = 1
+        }else if (puntos1 < 21 && puntos2 < 21){
+            if(21 - puntos1 > 21 - puntos2){
+                winner = 2
+            }else if(21 - puntos1 < 21 - puntos2){
+                winner = 1
             }
-        }else if(pts1 == 21){
-            winner = true
-            jug1.ganaApuesta(apuesta)
-        }else if(pts2 == 21){
-            winner = true
-            jug2.ganaApuesta(apuesta)
+        }else if(puntos1 == 21){
+            winner = 1
+        }else if(puntos2 == 21){
+            winner = 2
         }else{
-            winner = false
-            banca.ganaApuesta(apuesta)
+            winner = 3
         }
     }else{
-        winner = false
-        banca.ganaApuesta(apuesta)
+        winner = 3
     }
     return winner
 }
-
-HAY QUE REVISAR APUESTAS PORQUE NO ACTUALIZA EL VALOR DE LAS FICHAS DE LOS JUGADORES
-NO SALTA CUANDO HAY UN GANADOR
+/*
+Pasado a estados, falta determinar ganador y actualizar fichas
  */
+
+

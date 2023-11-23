@@ -28,3 +28,7 @@ fun NombresJugadores(){
         TextField(value = "", onValueChange = {it})
     }
 }
+
+/*
+Falta completar navegación
+ */
