@@ -172,8 +172,6 @@ fun winBet(puntos1: Int, puntos2: Int, plantado1: Boolean, plantado2: Boolean): 
     }
     return winner
 }
-/*
-Pasado a estados, falta determinar ganador y actualizar fichas
- */
+
 
 
