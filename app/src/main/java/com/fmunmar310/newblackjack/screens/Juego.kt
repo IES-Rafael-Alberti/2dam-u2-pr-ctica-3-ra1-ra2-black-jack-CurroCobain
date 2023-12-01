@@ -42,7 +42,7 @@ fun Juego(){
     var nombre2 by rememberSaveable { mutableStateOf("jugador2") }
     var fichas1 by rememberSaveable { mutableStateOf(5) }
     var fichas2 by rememberSaveable { mutableStateOf(5) }
-    val banca by rememberSaveable { mutableStateOf(0) }
+    var banca by rememberSaveable { mutableStateOf(0) }
     var plantado1 by rememberSaveable { mutableStateOf(false) }
     var plantado2 by rememberSaveable { mutableStateOf(false) }
     //val jugador1 = Jugador("jugador1", puntos1, lista1) ------ para la versión con objetos --------
@@ -75,8 +75,7 @@ fun Juego(){
                 .fillMaxWidth(0.5f),
                 horizontalAlignment = Alignment.CenterHorizontally)
             {
-                MuestraMano(lista1, nombre1, context)
-                MuestraStats(lista1, fichas1)
+                MuestraMano(lista1, nombre1, context,lista1,fichas1)
 
             }
             // --------------------- Columna jugador2 -------------------
@@ -85,8 +84,7 @@ fun Juego(){
                 .fillMaxWidth(1f),
                 horizontalAlignment = Alignment.CenterHorizontally)
             {
-                MuestraMano(lista2, nombre2, context)
-                MuestraStats(lista2, fichas2)
+                MuestraMano(lista2, nombre2, context, lista2, fichas2)
             }
         }
         Row(modifier = Modifier.align(alignment = Alignment.CenterHorizontally)){
@@ -103,6 +101,7 @@ fun Juego(){
             // --------------------- botones jugador1 ---------------------------
             JuegaJugador(0.5f,
                 onDameCartaClick = {
+                    banca++
                     micarta = miBaraja.cogerCarta()!!
                     lista1.add(micarta)
                     puntos1 = calculaPuntos(lista1)
@@ -123,6 +122,7 @@ fun Juego(){
             // --------------------- botones jugador2 ---------------------------
             JuegaJugador(1f,
                 onDameCartaClick = {
+                    banca++
                     micarta = miBaraja.cogerCarta()!!
                     lista2.add(micarta)
                     puntos2 = calculaPuntos(lista2)
@@ -141,6 +141,7 @@ fun Juego(){
         }
     }
 }
+
 /**
  * @return devuelve un int que indica el ganador de la partida
  * 1 -> jugador 1 gana

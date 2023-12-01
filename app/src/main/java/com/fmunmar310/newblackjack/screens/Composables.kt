@@ -21,6 +21,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,9 +39,10 @@ import com.fmunmar310.newblackjack.clases.Carta
  * Función composable que muestra  el nombre  y las cartas de la mano del jugador
  */
 @Composable
-fun MuestraMano(jugador: MutableList<Carta>, nombre: String, context: Context) {
+fun MuestraMano(jugador: MutableList<Carta>, nombre: String, context: Context, lista: MutableList<Carta>, fichas: Int ){
     var x = 0.dp
     var y = 0.dp
+    var restoDeCartas by rememberSaveable { mutableStateOf(0) }
     // generamos un box
     Box(modifier = Modifier
         .fillMaxHeight(0.7f)
@@ -49,6 +54,7 @@ fun MuestraMano(jugador: MutableList<Carta>, nombre: String, context: Context) {
                 .align(alignment = Alignment.TopCenter))
         Spacer(modifier = Modifier.padding(top = 20.dp))
         for (i in jugador) {
+            restoDeCartas++
             // por cada carta generamos otro box que va a tener una imagen dentro
             Box(modifier = Modifier
                 .clip(shape = MaterialTheme.shapes.medium)
@@ -76,6 +82,30 @@ fun MuestraMano(jugador: MutableList<Carta>, nombre: String, context: Context) {
                 y += 15.dp // aumentamos el valor de y
             }
         }
+    }
+    Row(
+        Modifier
+            .padding(top = 40.dp)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ){
+        Text(text = "Puntos ${calculaPuntos(lista)}",
+            fontSize = 20.sp,
+            modifier = Modifier
+                .background(Color.Gray)
+        )
+    }
+    Row(
+        Modifier
+            .padding(top = 10.dp)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ){
+        Text(text = "Fichas $fichas",
+            fontSize = 20.sp,
+            modifier = Modifier
+                .background(Color.Gray)
+        )
     }
 }
 
@@ -142,37 +172,7 @@ fun JuegaJugador(
     }
 }
 
-/**
- * Función composable que muestra los puntos y las fichas de cada jugador
- */
-@Composable
-fun MuestraStats(lista: MutableList<Carta>, fichas: Int)
-{
-    Row(
-        Modifier
-            .padding(top = 40.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ){
-        Text(text = "Puntos ${calculaPuntos(lista)}",
-            fontSize = 20.sp,
-            modifier = Modifier
-                .background(Color.Gray)
-        )
-    }
-    Row(
-        Modifier
-            .padding(top = 10.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ){
-        Text(text = "Fichas $fichas",
-            fontSize = 20.sp,
-            modifier = Modifier
-                .background(Color.Gray)
-        )
-    }
-}
+
 /**
  * @return devuelve los puntos de una lista de cartas
  * @see Carta
