@@ -30,5 +30,5 @@ fun NombresJugadores(){
 }
 
 /*
-Falta completar navegación
+Falta completar navegación para pasar los nombres
  */
