@@ -174,7 +174,7 @@ fun JuegaJugador(
 
 
 /**
- * @return devuelve los puntos de una lista de cartas
+ * @return devuelve los puntos de una lista de cartas recibida
  * @see Carta
  */
 fun calculaPuntos(mano: MutableList<Carta>):Int{
