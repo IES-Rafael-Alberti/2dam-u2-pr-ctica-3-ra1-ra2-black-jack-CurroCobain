@@ -45,8 +45,6 @@ fun Juego(){
     var banca by rememberSaveable { mutableStateOf(0) }
     var plantado1 by rememberSaveable { mutableStateOf(false) }
     var plantado2 by rememberSaveable { mutableStateOf(false) }
-    //val jugador1 = Jugador("jugador1", puntos1, lista1) ------ para la versión con objetos --------
-    //val jugador2 = Jugador("jugador2", puntos2, lista2) ------ para la versión con objetos --------
     var victoria1 by rememberSaveable { mutableStateOf(false) }
     var victoria2 by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
