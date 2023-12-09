@@ -1,7 +1,7 @@
 package com.fmunmar310.newblackjack.cardgames.ui
 
 import android.annotation.SuppressLint
-import android.content.Context
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -24,9 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,14 +33,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.fmunmar310.newblackjack.R
-import com.fmunmar310.newblackjack.cardgames.data.Baraja
 import com.fmunmar310.newblackjack.cardgames.data.Carta
-import com.fmunmar310.newblackjack.cardgames.data.Routes
+import com.fmunmar310.newblackjack.cardgames.data.Jugador
 
 // Función principal del juego
 @SuppressLint("DiscouragedApi", "MutableCollectionMutableState")
@@ -51,136 +47,89 @@ fun BlackJack(
     navController: NavController,
     blackJackViewModel: BlackJackViewModel
 ) {
-    // inicializamos las variables
-    val lista1 by rememberSaveable { mutableStateOf(mutableListOf<Carta>()) }
-    val lista2 by rememberSaveable { mutableStateOf(mutableListOf<Carta>()) }
-    var puntos1 by rememberSaveable { mutableStateOf(0) }
-    var puntos2 by rememberSaveable { mutableStateOf(0) }
-    val nombre1 by rememberSaveable { mutableStateOf("jugador1") }
-    val nombre2 by rememberSaveable { mutableStateOf("jugador2") }
-    var fichas1 by rememberSaveable { mutableStateOf(5) }
-    var fichas2 by rememberSaveable { mutableStateOf(5) }
-    //val banca by rememberSaveable { mutableStateOf(0) }
-    var plantado1 by rememberSaveable { mutableStateOf(false) }
-    var plantado2 by rememberSaveable { mutableStateOf(false) }
-    //val jugador1 = Jugador("jugador1", puntos1, lista1) ------ para la versión con objetos --------
-    //val jugador2 = Jugador("jugador2", puntos2, lista2) ------ para la versión con objetos --------
-    val context = LocalContext.current
-    var micarta: Carta
-    var cartaMostrar by rememberSaveable { mutableStateOf("reverso") }
-    val miBaraja = Baraja
-    var apuesta by rememberSaveable { mutableStateOf(0) }
-    var finPartida by rememberSaveable { mutableStateOf(false) }
-    /*
-    while (!finPartida) {
-        if (winBet(puntos1, puntos2, plantado1, plantado2) == 1) {
-            puntos1 += apuesta
-            apuesta = 0
-            miBaraja.reiniciar()
-            reiniciarValores(lista1, lista2)
-        } else if (winBet(puntos1, puntos2, plantado1, plantado2) == 2) {
-            puntos2 += apuesta
-            apuesta = 0
-            miBaraja.reiniciar()
-            reiniciarValores(lista1, lista2)
-        } else if (fichas1 == 0 || fichas2 == 0) {
-            finPartida = true
+    BackHandler {
+        blackJackViewModel.restart()
+        navController.popBackStack()
+    }
+
+    val nombre1: String by blackJackViewModel.nombre1.observeAsState(initial = "jugador1")
+    val nombre2: String by blackJackViewModel.nombre2.observeAsState(initial = "jugador2")
+    val mano1: MutableList<Carta> by blackJackViewModel.mano1.observeAsState(initial = mutableListOf())
+    val mano2: MutableList<Carta> by blackJackViewModel.mano2.observeAsState(initial = mutableListOf())
+    val plantado1: Boolean by blackJackViewModel.plantado1.observeAsState(initial = false)
+    val plantado2: Boolean by blackJackViewModel.plantado2.observeAsState(initial = false)
+    val puntos1: Int by blackJackViewModel.puntos1.observeAsState(initial = 0)
+    val puntos2: Int by blackJackViewModel.puntos2.observeAsState(initial = 0)
+    val barajaSize : Int by blackJackViewModel.barajaSize.observeAsState(initial = 52)
+
+    // ---------------------------------- Columna principal ------------
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .paint(
+                painter = painterResource(id = R.drawable.casino),
+                contentScale = ContentScale.FillHeight
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Row(  // ------------------- Fila cartas y puntos --------------------
+            Modifier
+                .padding(top = 20.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {//
+            // --------------------- Columna jugador1 ------------------
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight(0.65f)
+                    .fillMaxWidth(0.5f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            )
+            {
+                MuestraMano(nombre1, mano1, barajaSize)
+                Spacer(modifier = Modifier.padding(top = 20.dp))
+                MuestraStats(1, blackJackViewModel)
+
+            }
+            // --------------------- Columna jugador2 -------------------
+            Column(
+                modifier = Modifier
+                    .fillMaxHeight(0.65f)
+                    .fillMaxWidth(1f),
+                horizontalAlignment = Alignment.CenterHorizontally
+            )
+            {
+                MuestraMano(nombre2, mano2, barajaSize)
+                Spacer(modifier = Modifier.padding(top = 20.dp))
+                MuestraStats(2, blackJackViewModel)
+            }
         }
 
-     */
-        // ---------------------------------- Columna principal ------------
-        Column(
+        // ------------------------- fila botones --------------------------------
+        Row(
             modifier = Modifier
-                .fillMaxSize()
-                .paint(
-                    painter = painterResource(id = R.drawable.casino),
-                    contentScale = ContentScale.FillHeight
-                ),
-            horizontalAlignment = Alignment.CenterHorizontally
-        )
-        {
-            Row(  // ------------------- Fila cartas y puntos --------------------
-                Modifier
-                    .padding(top = 20.dp)
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {//
-                // --------------------- Columna jugador1 ------------------
-                Column(
-                    modifier = Modifier
-                        .fillMaxHeight(0.65f)
-                        .fillMaxWidth(0.5f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                )
-                {
-                    MuestraMano(lista1, nombre1, context)
-                    MuestraStats(lista1, fichas1)
-
-                }
-                // --------------------- Columna jugador2 -------------------
-                Column(
-                    modifier = Modifier
-                        .fillMaxHeight(0.65f)
-                        .fillMaxWidth(1f),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                )
-                {
-                    MuestraMano(lista2, nombre2, context)
-                    MuestraStats(lista2, fichas2)
-                }
-            }
-            Row(modifier = Modifier.align(alignment = Alignment.CenterHorizontally)) {
-                Text(
-                    text = "Bote $apuesta",
-                    fontSize = 20.sp,
-                    modifier = Modifier
-                        .background(Color.Gray)
-                )
-            }
-            // ------------------------- fila botones --------------------------------
-            Row(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .fillMaxWidth()
-            ) {
-                // --------------------- botones jugador1 ---------------------------
-                JuegaJugador(0.5f,
-                    onDameCartaClick = {
-                        micarta = miBaraja.cogerCarta()!!
-                        lista1.add(micarta)
-                        puntos1 = calculaPuntos(lista1)
-                        //jugador1.addCarta(micarta) ---versión objetos---
-                        //puntos1 = jugador1.calculaPuntos() ---versión objetos ----
-
-                    },
-                    onPass = {
-                        plantado1 = true
-                    },
-                    onBet = {
-                        fichas1--
-                        apuesta++
-                    })
-                // --------------------- botones jugador2 ---------------------------
-                JuegaJugador(1f,
-                    onDameCartaClick = {
-                        micarta = miBaraja.cogerCarta()!!
-                        lista2.add(micarta)
-                        puntos2 = calculaPuntos(lista2)
-
-                    },
-                    onPass = {
-                        plantado2 = true
-                    },
-                    onBet = {
-                        fichas2--
-                        apuesta++
-                    })
-            }
+                .fillMaxHeight()
+                .fillMaxWidth()
+        ) {
+            // --------------------- botones jugador1 ---------------------------
+            JuegaJugador(0.5f,
+                onDameCartaClick = {
+                    blackJackViewModel.dameCarta(1)
+                },
+                onPass = {
+                    blackJackViewModel.plantarse(1)
+                })
+            // --------------------- botones jugador2 ---------------------------
+            JuegaJugador(1f,
+                onDameCartaClick = {
+                    blackJackViewModel.dameCarta(2)
+                },
+                onPass = {
+                    blackJackViewModel.plantarse(2)
+                })
         }
     }
-//}
-
-
+}
     /**
      * @return devuelve un int que indica el ganador de la partida
      * 1 -> jugador 1 gana
@@ -213,16 +162,14 @@ fun BlackJack(
         return winner
     }
 
-    fun reiniciarValores(lista1: MutableList<Carta>, lista2: MutableList<Carta>){
-        lista1.clear()
-        lista2.clear()
-    }
 
 /**
  * Función composable que muestra  el nombre  y las cartas de la mano del jugador
  */
+@SuppressLint("DiscouragedApi")
+@Suppress("UNUSED_PARAMETER")
 @Composable
-fun MuestraMano(jugador: MutableList<Carta>, nombre: String, context: Context) {
+fun MuestraMano(nombre: String, mano: MutableList<Carta>, barajaSize: Int) {
     var x = 0.dp
     var y = 0.dp
     // generamos un box
@@ -234,8 +181,7 @@ fun MuestraMano(jugador: MutableList<Carta>, nombre: String, context: Context) {
             modifier = Modifier
                 .background(Color.Gray)
                 .align(alignment = Alignment.TopCenter))
-        Spacer(modifier = Modifier.padding(top = 20.dp))
-        for (i in jugador) {
+        for (i in mano) {
             // por cada carta generamos otro box que va a tener una imagen dentro
             Box(modifier = Modifier
                 .clip(shape = MaterialTheme.shapes.medium)
@@ -248,16 +194,17 @@ fun MuestraMano(jugador: MutableList<Carta>, nombre: String, context: Context) {
             ) {
                 Image( // Esta es la imagen de la carta
                     painter = painterResource(
-                        id = context.resources.getIdentifier(
-                            "c" + i.idDrawable.toString(),
+                        id = LocalContext.current.resources.getIdentifier(
+                            "c${i.idDrawable}",
                             "drawable",
-                            context.packageName
+                            LocalContext.current.packageName
                         )
                     ),
                     contentDescription = "Carta mostrada",
                     modifier = Modifier
                         .height(150.dp)
                         .width(75.dp)
+                        .padding(top = 50.dp)
                 )
                 x += 15.dp //aumentamos el valor de x
                 y += 15.dp // aumentamos el valor de y
@@ -273,7 +220,6 @@ fun MuestraMano(jugador: MutableList<Carta>, nombre: String, context: Context) {
 fun JuegaJugador(
     ancho: Float,
     onDameCartaClick: () -> Unit,
-    onBet: () -> Unit,
     onPass: () -> Unit
 ) {
     Column(
@@ -302,21 +248,6 @@ fun JuegaJugador(
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
         ) {
-            // --------------------------- Botón para subir apuesta ----------------------------
-            Button(modifier = Modifier.wrapContentSize(),
-                colors = ButtonDefaults.buttonColors(Color.Black),
-                shape = CutCornerShape(5.dp),
-                onClick = { onBet() }
-            ) {
-                Text("Subir apuesta ")
-            }
-        }
-        Row(
-            Modifier
-                .padding(top = 5.dp)
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
             // --------------------------- Botón para plantarse ----------------------------
             Button(modifier = Modifier.wrapContentSize(),
                 colors = ButtonDefaults.buttonColors(Color.Black),
@@ -330,10 +261,10 @@ fun JuegaJugador(
 }
 
 /**
- * Función composable que muestra los puntos y las fichas de cada jugador
+ * Función composable que muestra los puntos de cada jugador
  */
 @Composable
-fun MuestraStats(lista: MutableList<Carta>, fichas: Int)
+fun MuestraStats(jug: Int, blackJackViewModel: BlackJackViewModel)
 {
     Row(
         Modifier
@@ -341,26 +272,29 @@ fun MuestraStats(lista: MutableList<Carta>, fichas: Int)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
     ){
-        Text(text = "Puntos ${calculaPuntos(lista)}",
-            fontSize = 20.sp,
-            modifier = Modifier
-                .background(Color.Gray)
-        )
-    }
-    Row(
-        Modifier
-            .padding(top = 10.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
-    ){
-        Text(text = "Fichas $fichas",
+        Text(text = "Puntos ${blackJackViewModel.getPuntos(jug)}",
             fontSize = 20.sp,
             modifier = Modifier
                 .background(Color.Gray)
         )
     }
 }
-/**
+
+/*
+Pasado a estados, falta determinar ganador y actualizar fichas
+  REVISAR NO FUNCIONA
+    victoria = winBet(jugador1, jugador2, banca, apuesta)
+    if (victoria){
+        winBet(jugador1, jugador2, banca, apuesta)
+        }
+
+  REVISAR NO FUNCIONA
+    victoria = winBet(jugador1, jugador2, banca, apuesta)
+    if (victoria){
+        winBet(jugador1, jugador2, banca, apuesta)
+        }
+
+        /**
  * @return devuelve los puntos de una lista de cartas
  * @see Carta
  */
@@ -377,19 +311,12 @@ fun calculaPuntos(mano: MutableList<Carta>):Int{
     }
     return puntos
 }
-/*
-Pasado a estados, falta determinar ganador y actualizar fichas
-  REVISAR NO FUNCIONA
-    victoria = winBet(jugador1, jugador2, banca, apuesta)
-    if (victoria){
-        winBet(jugador1, jugador2, banca, apuesta)
-        }
 
-  REVISAR NO FUNCIONA
-    victoria = winBet(jugador1, jugador2, banca, apuesta)
-    if (victoria){
-        winBet(jugador1, jugador2, banca, apuesta)
-        }
+ fun reiniciarValores(lista1: MutableList<Carta>, lista2: MutableList<Carta>){
+        lista1.clear()
+        lista2.clear()
+    }
  */
+
 
 
