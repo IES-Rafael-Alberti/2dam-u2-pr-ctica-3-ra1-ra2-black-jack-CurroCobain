@@ -76,6 +76,6 @@ class Jugador(
     }
 }
 
-
+// Esto no se usa de momento, tengo que cambiar y usar jugador pa algo, o no....
 
 
