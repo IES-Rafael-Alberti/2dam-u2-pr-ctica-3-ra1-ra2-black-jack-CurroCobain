@@ -14,34 +14,52 @@ import com.fmunmar310.newblackjack.cardgames.data.Palos
 class BlackJackViewModel (application: Application): AndroidViewModel(application) {
     @SuppressLint("StaticFieldLeak")
     private val context = getApplication<Application>().applicationContext
-    private val _imagedId = MutableLiveData<String>()
-    val imageId : LiveData<String> = _imagedId
+
     private val _puntos1  = MutableLiveData<Int>()
     val puntos1 : LiveData<Int> = _puntos1
+
     private val _mano1 = MutableLiveData<MutableList<Carta>>()
     val mano1 : LiveData<MutableList<Carta>> = _mano1
+
     private val _puntos2  = MutableLiveData<Int>()
     val puntos2 : LiveData<Int> = _puntos2
+
     private val _mano2 = MutableLiveData<MutableList<Carta>>()
     val mano2 : LiveData<MutableList<Carta>> = _mano2
-    private val _miCarta = MutableLiveData<Carta>()
+
     private val _nombre1 = MutableLiveData<String>()
     val nombre1: LiveData<String> = _nombre1
+
     private val _nombre2 = MutableLiveData<String>()
     val nombre2: LiveData<String> = _nombre2
+
     private val _plantado1 = MutableLiveData<Boolean>()
     val plantado1: LiveData<Boolean> = _plantado1
+
     private val _plantado2 = MutableLiveData<Boolean>()
     val plantado2: LiveData<Boolean> = _plantado2
-    val miCarta : MutableLiveData<Carta> = _miCarta
+
     private val miBaraja = Baraja
+
     private  val _barajaSize = MutableLiveData<Int>()
     val barajaSize : LiveData<Int> = _barajaSize
 
+    private val _restart = MutableLiveData<Int>()
+    val restart : LiveData<Int> = _restart
+
     init {
+        _restart.value = 0
         restart()
         _mano1.value = mutableListOf()
         _mano2.value = mutableListOf()
+
+    }
+    fun cambiaNombre(nuevoNombre: String, num: Int){
+        if(num == 1){
+            _nombre1.value = nuevoNombre
+        }else if(num == 2){
+            _nombre2.value = nuevoNombre
+        }
     }
     fun dameCarta(jug: Int){
         val nuevaCarta = miBaraja.cogerCarta()
@@ -77,7 +95,11 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
             _plantado2.value = true
         }
     }
+    fun sumaRestart(){
+        _restart.value = _restart.value!! + 1
+    }
     fun restart(){
+        sumaRestart()
         miBaraja.reiniciar(context)
         _mano1.value?.clear()
         _mano2.value?.clear()

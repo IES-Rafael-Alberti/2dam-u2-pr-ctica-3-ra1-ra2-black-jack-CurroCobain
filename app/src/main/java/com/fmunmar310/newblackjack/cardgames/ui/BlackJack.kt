@@ -61,6 +61,7 @@ fun BlackJack(
     val puntos1: Int by blackJackViewModel.puntos1.observeAsState(initial = 0)
     val puntos2: Int by blackJackViewModel.puntos2.observeAsState(initial = 0)
     val barajaSize : Int by blackJackViewModel.barajaSize.observeAsState(initial = 52)
+    val restart : Int by blackJackViewModel.restart.observeAsState(initial = 0)
 
     // ---------------------------------- Columna principal ------------
     Column(
@@ -108,26 +109,37 @@ fun BlackJack(
         // ------------------------- fila botones --------------------------------
         Row(
             modifier = Modifier
-                .fillMaxHeight()
+                .fillMaxHeight(0.7f)
                 .fillMaxWidth()
         ) {
             // --------------------- botones jugador1 ---------------------------
             JuegaJugador(0.5f,
                 onDameCartaClick = {
                     blackJackViewModel.dameCarta(1)
+                    blackJackViewModel.sumaRestart()
                 },
                 onPass = {
                     blackJackViewModel.plantarse(1)
-                })
+                },
+                restart = restart
+            )
             // --------------------- botones jugador2 ---------------------------
             JuegaJugador(1f,
                 onDameCartaClick = {
                     blackJackViewModel.dameCarta(2)
+                    blackJackViewModel.sumaRestart()
                 },
                 onPass = {
                     blackJackViewModel.plantarse(2)
-                })
+                },
+                restart = restart
+            )
         }
+        BotonRestart(restart = restart,
+            onClick = {
+                blackJackViewModel.restart()
+            }
+        )
     }
 }
     /**
@@ -216,11 +228,13 @@ fun MuestraMano(nombre: String, mano: MutableList<Carta>, barajaSize: Int) {
 /**
  * Función composable con tres botones para pedir carta, subir la apuesta o plantarse
  */
+@Suppress("UNUSED_PARAMETER")
 @Composable
 fun JuegaJugador(
     ancho: Float,
+    restart: Int,
     onDameCartaClick: () -> Unit,
-    onPass: () -> Unit
+    onPass: () -> Unit,
 ) {
     Column(
         Modifier
@@ -280,6 +294,29 @@ fun MuestraStats(jug: Int, blackJackViewModel: BlackJackViewModel)
     }
 }
 
+/**
+ * Función composable que muestra el botón de reiniciar partida
+ */
+@Suppress("UNUSED_PARAMETER")
+@Composable
+fun BotonRestart(
+    restart: Int,
+    onClick: () -> Unit){
+    Row(
+        Modifier
+            .padding(top = 5.dp)
+            .fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ){
+        Button(modifier = Modifier.wrapContentSize(),
+            colors = ButtonDefaults.buttonColors(Color.Black),
+            shape = CutCornerShape(5.dp),
+            onClick = { onClick()}
+        ) {
+            Text("Reiniciar partida")
+        }
+    }
+}
 /*
 Pasado a estados, falta determinar ganador y actualizar fichas
   REVISAR NO FUNCIONA
