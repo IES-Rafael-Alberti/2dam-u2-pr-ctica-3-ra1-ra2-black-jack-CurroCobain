@@ -30,6 +30,12 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
     private val _nombre1 = MutableLiveData<String>()
     val nombre1: LiveData<String> = _nombre1
 
+    private val _nombreEditado1 = MutableLiveData<Boolean>()
+    val nombreEditado1: LiveData<Boolean> = _nombreEditado1
+
+    private val _nombreEditado2 = MutableLiveData<Boolean>()
+    val nombreEditado2: LiveData<Boolean> = _nombreEditado2
+
     private val _nombre2 = MutableLiveData<String>()
     val nombre2: LiveData<String> = _nombre2
 
@@ -38,6 +44,9 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
 
     private val _plantado2 = MutableLiveData<Boolean>()
     val plantado2: LiveData<Boolean> = _plantado2
+
+    private val _ganador = MutableLiveData<Int>()
+    val ganador : LiveData<Int> = _ganador
 
     private val miBaraja = Baraja
 
@@ -52,13 +61,23 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         restart()
         _mano1.value = mutableListOf()
         _mano2.value = mutableListOf()
-
+        _nombreEditado1.value = false
+        _nombreEditado2.value = false
     }
     fun cambiaNombre(nuevoNombre: String, num: Int){
         if(num == 1){
             _nombre1.value = nuevoNombre
+            _nombreEditado1.value = true
         }else if(num == 2){
             _nombre2.value = nuevoNombre
+            _nombreEditado2.value = true
+        }
+    }
+    fun falseaNombreEditado(num: Int){
+        if(num == 1){
+            _nombreEditado1.value = false
+        }else if (num == 2){
+            _nombreEditado2.value = false
         }
     }
     fun dameCarta(jug: Int){
@@ -107,6 +126,7 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         _puntos2.value = 0
         _plantado1.value = false
         _plantado2.value = false
+        _ganador.value = 0
     }
     fun calculaPuntos(mano: MutableList<Carta> ): Int {
         var puntos = 0
@@ -125,6 +145,35 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
     fun restoDeCartas() = miBaraja.size
     fun toasted(text: String){
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+    }
+    /**
+     * @return devuelve un int que indica el ganador de la partida
+     * 1 -> jugador 1 gana
+     * 2 -> jugador 2 gana
+     * 3 -> banca gana
+     */
+    fun winBet(puntos1: Int, puntos2: Int, plantado1: Boolean, plantado2: Boolean){
+       if(puntos1 > 21){
+           if(puntos2 <= 21){
+               _ganador.value = 2
+           }
+       }else if(puntos2 > 21){
+           if(puntos1 <= 21){
+               _ganador.value = 1
+           }
+       }else if(puntos1 < 21 && plantado1){
+           if(puntos2 < puntos1 && plantado2){
+               _ganador.value = 1
+           }
+       }else if(puntos2 < 21 && plantado2){
+           if(puntos1 < puntos2 && plantado1){
+               _ganador.value = 2
+           }
+       }else if(puntos1 > 21 && puntos2 > 21){
+           _ganador.value = 3
+       }else{
+           _ganador.value = 0
+       }
     }
 
 }

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,13 +19,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,12 +40,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.fmunmar310.newblackjack.R
 import com.fmunmar310.newblackjack.cardgames.data.Carta
-import com.fmunmar310.newblackjack.cardgames.data.Jugador
 
 // Función principal del juego
 @SuppressLint("DiscouragedApi", "MutableCollectionMutableState")
@@ -52,14 +59,17 @@ fun BlackJack(
         navController.popBackStack()
     }
 
-    val nombre1: String by blackJackViewModel.nombre1.observeAsState(initial = "jugador1")
-    val nombre2: String by blackJackViewModel.nombre2.observeAsState(initial = "jugador2")
+    val nombre1: String by blackJackViewModel.nombre1.observeAsState(initial = "haz click para editar tu nombre")
+    val nombre2: String by blackJackViewModel.nombre2.observeAsState(initial = "haz click para editar tu nombre")
     val mano1: MutableList<Carta> by blackJackViewModel.mano1.observeAsState(initial = mutableListOf())
     val mano2: MutableList<Carta> by blackJackViewModel.mano2.observeAsState(initial = mutableListOf())
+    val nombreEditado1: Boolean by blackJackViewModel.nombreEditado1.observeAsState(initial = false)
+    val nombreEditado2: Boolean by blackJackViewModel.nombreEditado2.observeAsState(initial = false)
     val plantado1: Boolean by blackJackViewModel.plantado1.observeAsState(initial = false)
     val plantado2: Boolean by blackJackViewModel.plantado2.observeAsState(initial = false)
     val puntos1: Int by blackJackViewModel.puntos1.observeAsState(initial = 0)
     val puntos2: Int by blackJackViewModel.puntos2.observeAsState(initial = 0)
+    val ganador: Int by blackJackViewModel.ganador.observeAsState(initial = 0)
     val barajaSize : Int by blackJackViewModel.barajaSize.observeAsState(initial = 52)
     val restart : Int by blackJackViewModel.restart.observeAsState(initial = 0)
 
@@ -73,6 +83,13 @@ fun BlackJack(
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        if(ganador == 1){
+            Ganador(blackJackViewModel = blackJackViewModel, nombre = nombre1)
+        }else if(ganador == 2){
+            Ganador(blackJackViewModel = blackJackViewModel, nombre = nombre2)
+        }else if(ganador == 3){
+            Empate(blackJackViewModel = blackJackViewModel)
+        }
         Row(  // ------------------- Fila cartas y puntos --------------------
             Modifier
                 .padding(top = 20.dp)
@@ -87,7 +104,7 @@ fun BlackJack(
                 horizontalAlignment = Alignment.CenterHorizontally
             )
             {
-                MuestraMano(nombre1, mano1, barajaSize)
+                MuestraMano(nombreEditado1,nombre1, mano1, barajaSize,blackJackViewModel,1)
                 Spacer(modifier = Modifier.padding(top = 20.dp))
                 MuestraStats(1, blackJackViewModel)
 
@@ -100,7 +117,7 @@ fun BlackJack(
                 horizontalAlignment = Alignment.CenterHorizontally
             )
             {
-                MuestraMano(nombre2, mano2, barajaSize)
+                MuestraMano(nombreEditado2,nombre2, mano2, barajaSize, blackJackViewModel, 2)
                 Spacer(modifier = Modifier.padding(top = 20.dp))
                 MuestraStats(2, blackJackViewModel)
             }
@@ -117,9 +134,11 @@ fun BlackJack(
                 onDameCartaClick = {
                     blackJackViewModel.dameCarta(1)
                     blackJackViewModel.sumaRestart()
+                    blackJackViewModel.winBet(puntos1,puntos2,plantado1,plantado2)
                 },
                 onPass = {
                     blackJackViewModel.plantarse(1)
+                    blackJackViewModel.winBet(puntos1,puntos2,plantado1,plantado2)
                 },
                 restart = restart
             )
@@ -128,9 +147,11 @@ fun BlackJack(
                 onDameCartaClick = {
                     blackJackViewModel.dameCarta(2)
                     blackJackViewModel.sumaRestart()
+                    blackJackViewModel.winBet(puntos1,puntos2,plantado1,plantado2)
                 },
                 onPass = {
                     blackJackViewModel.plantarse(2)
+                    blackJackViewModel.winBet(puntos1,puntos2,plantado1,plantado2)
                 },
                 restart = restart
             )
@@ -142,57 +163,32 @@ fun BlackJack(
         )
     }
 }
-    /**
-     * @return devuelve un int que indica el ganador de la partida
-     * 1 -> jugador 1 gana
-     * 2 -> jugador 2 gana
-     * 3 -> banca gana
-     */
-    fun winBet(puntos1: Int, puntos2: Int, plantado1: Boolean, plantado2: Boolean): Int {
-        var winner = 0
-        if (plantado1 && plantado2) {
-            if (puntos1 > 21 && puntos2 < 21) {
-                winner = 2
-            } else if (puntos1 < 21 && puntos2 > 21) {
-                winner = 1
-            } else if (puntos1 < 21 && puntos2 < 21) {
-                if (21 - puntos1 > 21 - puntos2) {
-                    winner = 2
-                } else if (21 - puntos1 < 21 - puntos2) {
-                    winner = 1
-                }
-            } else if (puntos1 == 21) {
-                winner = 1
-            } else if (puntos2 == 21) {
-                winner = 2
-            } else {
-                winner = 3
-            }
-        } else {
-            winner = 3
-        }
-        return winner
-    }
-
 
 /**
- * Función composable que muestra  el nombre  y las cartas de la mano del jugador
+ * Función composable que muestra  el nombre  y las cartas de la mano del jugador, 
+ * permite editar el nombre del jugador haciendo click sobre el propio nombre
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("DiscouragedApi")
 @Suppress("UNUSED_PARAMETER")
 @Composable
-fun MuestraMano(nombre: String, mano: MutableList<Carta>, barajaSize: Int) {
+fun MuestraMano(nombreEditado: Boolean, nombre: String, mano: MutableList<Carta>, barajaSize: Int, blackJackViewModel: BlackJackViewModel, num: Int) {
     var x = 0.dp
     var y = 0.dp
     // generamos un box
     Box(modifier = Modifier
         .fillMaxHeight(0.7f)
         .fillMaxWidth()) {
-        Text(text = nombre,
-            fontSize = 20.sp,
-            modifier = Modifier
-                .background(Color.Gray)
-                .align(alignment = Alignment.TopCenter))
+        if(!nombreEditado){
+            editaNombre(blackJackViewModel = blackJackViewModel, num = num)
+        }else {
+            Text(text = nombre,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .background(Color.Gray)
+                    .align(alignment = Alignment.TopCenter)
+                    .clickable { blackJackViewModel.falseaNombreEditado(num) })
+        }
         for (i in mano) {
             // por cada carta generamos otro box que va a tener una imagen dentro
             Box(modifier = Modifier
@@ -316,6 +312,91 @@ fun BotonRestart(
             Text("Reiniciar partida")
         }
     }
+}
+
+/**
+ * Función composable que muestra un AlertDialog para editar el nombre del jugador
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun editaNombre(blackJackViewModel: BlackJackViewModel, num: Int){
+    var  nuevoNombre by rememberSaveable{ mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = {
+           blackJackViewModel.cambiaNombre("", num)
+        },
+        title = {
+            Text("Nombre del jugador $num")
+        },
+        text = {
+            TextField(
+                value = nuevoNombre,
+                onValueChange = {nuevoNombre = it
+                },
+                textStyle = TextStyle(fontSize = 20.sp),
+                modifier = Modifier.fillMaxWidth(),
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    blackJackViewModel.cambiaNombre(nuevoNombre,num)
+                }
+            ) {
+                Text("Aceptar")
+            }
+        }
+    )
+}
+@Composable
+fun Ganador(blackJackViewModel: BlackJackViewModel, nombre: String){
+    AlertDialog(
+        onDismissRequest = {
+            blackJackViewModel.restart()
+        },
+        title = {
+            Text("Resultado: ")
+        },
+        text = {
+            Text(
+                text = "Ha ganado el jugador $nombre"
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    blackJackViewModel.restart()
+                }
+            ) {
+                Text("Aceptar")
+            }
+        }
+    )
+}
+@Composable
+fun Empate(blackJackViewModel: BlackJackViewModel){
+    AlertDialog(
+        onDismissRequest = {
+            blackJackViewModel.restart()
+        },
+        title = {
+            Text("Resultado: ")
+        },
+        text = {
+            Text(
+                text = "Ha habido un empate"
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    blackJackViewModel.restart()
+                }
+            ) {
+                Text("Aceptar")
+            }
+        }
+    )
 }
 /*
 Pasado a estados, falta determinar ganador y actualizar fichas
