@@ -8,8 +8,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.fmunmar310.newblackjack.cardgames.data.Baraja
 import com.fmunmar310.newblackjack.cardgames.data.Carta
-import com.fmunmar310.newblackjack.cardgames.data.Naipes
-import com.fmunmar310.newblackjack.cardgames.data.Palos
 
 class BlackJackViewModel (application: Application): AndroidViewModel(application) {
     @SuppressLint("StaticFieldLeak")
@@ -87,14 +85,14 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
                 _mano1.value?.add(nuevaCarta!!)
                 _puntos1.value = calculaPuntos(_mano1.value!!)
             } else {
-                toasted("El jugador está plantado")
+                toasted()
             }
         }else if(jug == 2){
             if (!_plantado2.value!!) {
                 _mano2.value?.add(nuevaCarta!!)
                 _puntos2.value = calculaPuntos(_mano2.value!!)
             } else {
-                toasted("El jugador está plantado")
+                toasted()
             }
         }
         _barajaSize.value = miBaraja.size
@@ -128,7 +126,7 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         _plantado2.value = false
         _ganador.value = 0
     }
-    fun calculaPuntos(mano: MutableList<Carta> ): Int {
+    private fun calculaPuntos(mano: MutableList<Carta> ): Int {
         var puntos = 0
         if (mano.isNotEmpty()) {
             for (i in mano) {
@@ -142,9 +140,8 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         }
         return puntos
     }
-    fun restoDeCartas() = miBaraja.size
-    fun toasted(text: String){
-        Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+    private fun toasted(){
+        Toast.makeText(context, "El jugador está plantado", Toast.LENGTH_SHORT).show()
     }
     /**
      * @return devuelve un int que indica el ganador de la partida
@@ -165,12 +162,14 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
            if(puntos2 < puntos1 && plantado2){
                _ganador.value = 1
            }
-       }else if(puntos2 < 21 && plantado2){
-           if(puntos1 < puntos2 && plantado1){
+       }else if(puntos2 < 21 && plantado2) {
+           if (puntos1 < puntos2 && plantado1) {
                _ganador.value = 2
            }
-       }else if(puntos1 > 21 && puntos2 > 21){
-           _ganador.value = 3
+       }else if(puntos1 == 21) {
+           _ganador.value = 1
+       }else if(puntos2 == 21){
+           _ganador.value = 2
        }else{
            _ganador.value = 0
        }

@@ -87,8 +87,6 @@ fun BlackJack(
             Ganador(blackJackViewModel = blackJackViewModel, nombre = nombre1)
         }else if(ganador == 2){
             Ganador(blackJackViewModel = blackJackViewModel, nombre = nombre2)
-        }else if(ganador == 3){
-            Empate(blackJackViewModel = blackJackViewModel)
         }
         Row(  // ------------------- Fila cartas y puntos --------------------
             Modifier
@@ -168,7 +166,6 @@ fun BlackJack(
  * Función composable que muestra  el nombre  y las cartas de la mano del jugador, 
  * permite editar el nombre del jugador haciendo click sobre el propio nombre
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("DiscouragedApi")
 @Suppress("UNUSED_PARAMETER")
 @Composable
@@ -180,7 +177,7 @@ fun MuestraMano(nombreEditado: Boolean, nombre: String, mano: MutableList<Carta>
         .fillMaxHeight(0.7f)
         .fillMaxWidth()) {
         if(!nombreEditado){
-            editaNombre(blackJackViewModel = blackJackViewModel, num = num)
+            EditaNombre(blackJackViewModel = blackJackViewModel, num = num)
         }else {
             Text(text = nombre,
                 fontSize = 20.sp,
@@ -319,7 +316,7 @@ fun BotonRestart(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun editaNombre(blackJackViewModel: BlackJackViewModel, num: Int){
+fun EditaNombre(blackJackViewModel: BlackJackViewModel, num: Int){
     var  nuevoNombre by rememberSaveable{ mutableStateOf("") }
     AlertDialog(
         onDismissRequest = {
@@ -360,31 +357,6 @@ fun Ganador(blackJackViewModel: BlackJackViewModel, nombre: String){
         text = {
             Text(
                 text = "Ha ganado el jugador $nombre"
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    blackJackViewModel.restart()
-                }
-            ) {
-                Text("Aceptar")
-            }
-        }
-    )
-}
-@Composable
-fun Empate(blackJackViewModel: BlackJackViewModel){
-    AlertDialog(
-        onDismissRequest = {
-            blackJackViewModel.restart()
-        },
-        title = {
-            Text("Resultado: ")
-        },
-        text = {
-            Text(
-                text = "Ha habido un empate"
             )
         },
         confirmButton = {

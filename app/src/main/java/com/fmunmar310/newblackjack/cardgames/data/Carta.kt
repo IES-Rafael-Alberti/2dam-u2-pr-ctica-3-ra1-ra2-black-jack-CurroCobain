@@ -16,7 +16,7 @@ class Carta (val nombre: Naipes, val palo : Palos, var puntosMin: Int, var punto
         if (nombre.valor == 1){
             puntosMax = 11
             puntosMin = 1
-        }else if(nombre.valor in 2 ..11){
+        }else if(nombre.valor in 2 ..10){
             puntosMax = nombre.valor
             puntosMin = nombre.valor
         }else if(nombre.valor > 10){
