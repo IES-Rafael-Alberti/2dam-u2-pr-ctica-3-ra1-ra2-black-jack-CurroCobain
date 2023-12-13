@@ -9,6 +9,39 @@ import androidx.lifecycle.MutableLiveData
 import com.fmunmar310.newblackjack.cardgames.data.Baraja
 import com.fmunmar310.newblackjack.cardgames.data.Carta
 
+/**
+ * @property context indica el contexto de la app
+ * @property _puntos1 almacena los puntos del jugador 1
+ * @property puntos1 muestra los puntos del jugador 1
+ * @property _puntos2 almacena los puntos del jugador 2
+ * @property puntos2 muestra los puntos del jugador 2
+ * @property _mano1 almacena la lista de cartas del jugador 1
+ * @property mano1 muestra la lista de cartas del jugador 1
+ * @property _mano2 almacena la lista de cartas del jugador 2
+ * @property mano2 muestra la lista de cartas del jugador 2
+ * @property _nombre1 almacena el nombre del jugador 1
+ * @property nombre1 muestra el nombre del jugador 1
+ * @property _nombre2 almacena el nombre del jugador 2
+ * @property nombre2 muestra el nombre del jugador 2
+ * @property _nombreEditado1 almacena un booleano que indica si el nombre del jugador 1 ha sido editado
+ * @property nombreEditado1 muestra si el nombre del jugador 1 ha sido editado
+ * @property _nombreEditado2 almacena un booleano que indica si el nombre del jugador 2 ha sido editado
+ * @property nombreEditado2 muestra si el nombre del jugador 2 ha sido editado
+ * @property _plantado1 almacena un booleano que indica si el jugador 1 se ha plantado
+ * @property plantado1 muestra si el jugador 1 se ha plantado
+ * @property _plantado2 almacena un booleano que indica si el jugador 2 se ha plantado
+ * @property plantado2 muestra si el jugador 2 se ha plantado
+ * @property _ganador almacena un Int que indica el ganador de la partida
+ * @property ganador muestra el ganador de la partida
+ * @property miBaraja inicializa una baraja de cartas
+ * @property _barajaSize almacena el número de cartas que quedan en la baraja
+ * @property barajaSize muestra el número de cartas que quedan en la baraja
+ * @property _restart almacena un Int que se usa para forzar la actualización de la pantalla
+ * @property restart muestra el valor de "_restart"
+ * @property _turno almacena el jugador que está activo
+ * @property turno muestra el jugador activo
+ */
+
 class BlackJackViewModel (application: Application): AndroidViewModel(application) {
     @SuppressLint("StaticFieldLeak")
     private val context = getApplication<Application>().applicationContext
@@ -48,12 +81,18 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
 
     private val miBaraja = Baraja
 
+    //Se utiliza para forzar la actualización de la pantalla
     private  val _barajaSize = MutableLiveData<Int>()
     val barajaSize : LiveData<Int> = _barajaSize
 
+    //Se utiliza para forzar la actualización de la pantalla
     private val _restart = MutableLiveData<Int>()
     val restart : LiveData<Int> = _restart
 
+    private val _turno = MutableLiveData<Int>()
+    val turno : LiveData<Int> = _turno
+
+    // Inicializamos los valores necesarios para el funcionamiento del juego
     init {
         _restart.value = 0
         restart()
@@ -62,15 +101,30 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         _nombreEditado1.value = false
         _nombreEditado2.value = false
     }
+
+    /**
+     * Funcion que se usa para cambiar el nombre de un jugador
+     * @param nuevoNombre indica el nuevo nombre del jugador
+     * @param num indica el jugador al que se le va a cambiar el nombre
+     */
     fun cambiaNombre(nuevoNombre: String, num: Int){
         if(num == 1){
+            //Cambiamos el nombre del jugador
             _nombre1.value = nuevoNombre
+            //Actualizamos el valor de _nombreEditado1 a true
             _nombreEditado1.value = true
         }else if(num == 2){
+            //Cambiamos el nombre del jugador
             _nombre2.value = nuevoNombre
+            //Actualizamos el valor de _nombreEditado2 a true
             _nombreEditado2.value = true
         }
     }
+
+    /**
+     * Función que permite que se pueda editar de nuevo el nombre del jugador,
+     * se invoca pulsando sobre el nombre de cada jugador
+     */
     fun falseaNombreEditado(num: Int){
         if(num == 1){
             _nombreEditado1.value = false
@@ -78,25 +132,47 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
             _nombreEditado2.value = false
         }
     }
+
+    /**
+     * Función para añadir una carta a la mano del jugador
+     * @param jug indica a la mano de qué jugador se añade la carta
+     */
     fun dameCarta(jug: Int){
         val nuevaCarta = miBaraja.cogerCarta()
-        if(jug == 1) {
+        if(jug == 1 && _turno.value == 1) {
+            // Si el jugador no está plantado se añade la carta a su mano
             if (!_plantado1.value!!) {
                 _mano1.value?.add(nuevaCarta!!)
+                //Se calculan los puntos del jugador con la carta nueva añadida a su mano
                 _puntos1.value = calculaPuntos(_mano1.value!!)
+                _turno.value = if (!_plantado2.value!!) 2 else  1
             } else {
-                toasted()
+                //Si el jugador está plantado se manda un mensaje de error
+                toasted("El jugador está plantado")
             }
-        }else if(jug == 2){
+        }else if(jug == 2 && _turno.value == 2){
+            // Si el jugador no está plantado se añade la carta a su mano
             if (!_plantado2.value!!) {
                 _mano2.value?.add(nuevaCarta!!)
+                //Se calculan los puntos del jugador con la carta nueva añadida a su mano
                 _puntos2.value = calculaPuntos(_mano2.value!!)
+                _turno.value = if (!_plantado2.value!!) 1 else  2
             } else {
-                toasted()
+                //Si el jugador está plantado se manda un mensaje de error
+                toasted("El jugador está plantado")
             }
+        }else{
+            toasted("Es el turno del otro jugador")
         }
+        //Se actualiza el número de cartas restantes en la baraja
         _barajaSize.value = miBaraja.size
     }
+
+    /**
+     * Función para obtener los puntos de un jugador
+     * @param jug indica el jugador del cual queremos saber los puntos que tiene
+     * @return devuelve un Int que indica los puntos que tiene un jugador concreto
+     */
     fun getPuntos(jug: Int): Int {
         if(jug == 1){
             return calculaPuntos(_mano1.value!!)
@@ -105,16 +181,41 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         }
         return 0
     }
-    fun plantarse(jug: Int){
-        if(jug == 1){
-            _plantado1.value = true
-        }else if(jug == 2){
-            _plantado2.value = true
+
+    /**
+     * Función para plantar a un jugador
+     * @param jug indica el jugador al que queremos plantar
+     */
+    fun plantarse(jug: Int, turno: Int){
+        if(jug == 1 && turno == jug){
+            if(!_plantado1.value!!){
+                _plantado1.value = true
+                _turno.value = 2
+            }else{
+                toasted("El jugador ya se ha plantado")
+            }
+        }else if(jug == 2 && turno == jug){
+            if(!_plantado2.value!!){
+                _plantado2.value = true
+                _turno.value = 1
+            }else{
+                toasted("El jugador ya se ha plantado")
+            }
+        }else{
+            toasted("Es el turno del otro jugador")
         }
     }
+
+    /**
+     * Función que actualiza el valor de _restart, se usa para forzar la actualización de la pantalla
+     */
     fun sumaRestart(){
         _restart.value = _restart.value!! + 1
     }
+
+    /**
+     * Función que reinicia los valores del juego para poder jugar otra partida
+     */
     fun restart(){
         sumaRestart()
         miBaraja.reiniciar(context)
@@ -125,12 +226,19 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         _plantado1.value = false
         _plantado2.value = false
         _ganador.value = 0
+        _turno.value = 1
     }
+
+    /**
+     * Función que calcula los puntos de una lista de cartas
+     * @param mano indica la lista de cartas
+     * @return devuelve el total de puntos de dicha lista de cartas
+     */
     private fun calculaPuntos(mano: MutableList<Carta> ): Int {
         var puntos = 0
         if (mano.isNotEmpty()) {
             for (i in mano) {
-                // Se calcula si el total de puntos + la carta actual pasan de 21 y se asigna puntosMax o puntosMin en función a ese cálculo
+    // Se calcula si el total de puntos + la carta actual pasan de 21 y se asigna puntosMax o puntosMin en función a ese cálculo
                 if (puntos + i.puntosMax <= 21) {
                     puntos += i.puntosMax
                 } else {
@@ -140,85 +248,37 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         }
         return puntos
     }
-    private fun toasted(){
-        Toast.makeText(context, "El jugador está plantado", Toast.LENGTH_SHORT).show()
-    }
+
     /**
+     * Función para mostrar un mensaje de error
+     */
+    private fun toasted(mensaje: String){
+        Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
+    }
+
+    /**
+     * Función para calcular quién ha ganado la partida
      * @return devuelve un int que indica el ganador de la partida
      * 1 -> jugador 1 gana
      * 2 -> jugador 2 gana
-     * 3 -> banca gana
      */
     fun winBet(puntos1: Int, puntos2: Int, plantado1: Boolean, plantado2: Boolean){
-       if(puntos1 > 21){
-           if(puntos2 <= 21){
-               _ganador.value = 2
-           }
-       }else if(puntos2 > 21){
-           if(puntos1 <= 21){
-               _ganador.value = 1
-           }
-       }else if(puntos1 < 21 && plantado1){
-           if(puntos2 < puntos1 && plantado2){
-               _ganador.value = 1
-           }
-       }else if(puntos2 < 21 && plantado2) {
-           if (puntos1 < puntos2 && plantado1) {
-               _ganador.value = 2
-           }
-       }else if(puntos1 == 21) {
+        if(puntos1 == 21) {
+            _ganador.value = 1
+        }else if(puntos2 == 21){
+            _ganador.value = 2
+        }else if(puntos1 > 21 && puntos2 <= 21){
+            _ganador.value = 2
+        }else if(puntos2 > 21 && puntos1 <= 21){
            _ganador.value = 1
-       }else if(puntos2 == 21){
+        }else if((puntos1 < 21 && plantado1) && (puntos2 < puntos1 && plantado2)){
+           _ganador.value = 1
+        }else if((puntos2 < 21 && plantado2) && (puntos1 < puntos2 && plantado1)) {
            _ganador.value = 2
-       }else{
-           _ganador.value = 0
-       }
-    }
-
-}
-/*
- ------------------------------------------ CODIGO RECICLABLE??? ----------------------------------------------------
- // inicializamos las variables
-val lista1 by rememberSaveable { mutableStateOf(mutableListOf<Carta>()) }
-val lista2 by rememberSaveable { mutableStateOf(mutableListOf<Carta>()) }
-var puntos1 by rememberSaveable { mutableStateOf(0) }
-var puntos2 by rememberSaveable { mutableStateOf(0) }
-val nombre1 by rememberSaveable { mutableStateOf("jugador1") }
-val nombre2 by rememberSaveable { mutableStateOf("jugador2") }
-var fichas1 by rememberSaveable { mutableStateOf(5) }
-var fichas2 by rememberSaveable { mutableStateOf(5) }
-val banca by rememberSaveable { mutableStateOf(0) }
-var plantado1 by rememberSaveable { mutableStateOf(false) }
-var plantado2 by rememberSaveable { mutableStateOf(false) }
-val jugador1 = Jugador("jugador1", puntos1, lista1) ------ para la versión con objetos --------
-val jugador2 = Jugador("jugador2", puntos2, lista2) ------ para la versión con objetos --------
-val context = LocalContext.current
-var micarta: Carta
-var cartaMostrar by rememberSaveable { mutableStateOf("reverso") }
-val miBaraja = Baraja
-var apuesta by rememberSaveable { mutableStateOf(0) }
-var finPartida by rememberSaveable { mutableStateOf(false) }
-
------------------------  posible función de victoria --------------------------------------------
-while (!finPartida) {
-    if (winBet(puntos1, puntos2, plantado1, plantado2) == 1) {
-        puntos1 += apuesta
-        apuesta = 0
-        miBaraja.reiniciar()
-        reiniciarValores(lista1, lista2)
-    } else if (winBet(puntos1, puntos2, plantado1, plantado2) == 2) {
-        puntos2 += apuesta
-        apuesta = 0
-        miBaraja.reiniciar()
-        reiniciarValores(lista1, lista2)
-    } else if (fichas1 == 0 || fichas2 == 0) {
-        finPartida = true
-    }
-
-    fun apostar(jug: Int){
-        if(jug == 1){
-            _jugador1.value?.apuesta()
-
+        }else if ((plantado1 && plantado2) && (puntos1 == puntos2)){
+            _ganador.value = 3
+        }else{
+            _ganador.value = 0
         }
     }
- */
+}

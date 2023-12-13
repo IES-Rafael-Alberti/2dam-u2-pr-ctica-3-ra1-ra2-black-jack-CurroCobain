@@ -1,7 +1,8 @@
 package com.fmunmar310.newblackjack.cardgames.data
 
 /**
- * Clase tipo enum que indica los valores posibles de las cartas
+ * Clase tipo enum que indica los valores posibles de las cartas, se asocia un valor a cada nombre que luego
+ * se usará para conseguir los puntos de la carta.
  */
 enum class Naipes(val valor: Int) {
     AS (1), DOS(2), TRES(3), CUATRO(4), CINCO(5), SEIS(6), SIETE(7),

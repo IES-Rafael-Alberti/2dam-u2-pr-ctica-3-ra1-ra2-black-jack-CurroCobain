@@ -30,14 +30,14 @@ class Baraja {
         }
 
         /**
-         * Baraja las cartas
+         * Función para barajar las cartas
          */
         fun barajar(){
             listaCartas.shuffle()
         }
         /**
-         * Saca una carta de la baraja
-         * @return devuleve una carta de la baraja
+         * Función que saca una carta de la baraja
+         * @return devuelve una carta de la baraja
          */
         fun cogerCarta(): Carta?{
             if (listaCartas.size>0) {
@@ -48,6 +48,10 @@ class Baraja {
             }
             return null
         }
+
+        /**
+         * Función para reiniciar la baraja
+         */
         fun reiniciar(context: Context){
             creaBaraja(context)
             barajar()

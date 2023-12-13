@@ -12,6 +12,7 @@ package com.fmunmar310.newblackjack.cardgames.data
  * @property idDrawable indica la imagen que tiene la carta
  */
 class Carta (val nombre: Naipes, val palo : Palos, var puntosMin: Int, var puntosMax: Int, var idDrawable:Int){
+    //Asignamos los puntos correspondientes a la carta en función del valor asociado al nombre de la carta
     init {
         if (nombre.valor == 1){
             puntosMax = 11

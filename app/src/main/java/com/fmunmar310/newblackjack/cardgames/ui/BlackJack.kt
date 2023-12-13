@@ -54,17 +54,18 @@ fun BlackJack(
     navController: NavController,
     blackJackViewModel: BlackJackViewModel
 ) {
+    //Controlamos el uso de las teclas de navegación del móvil
     BackHandler {
         blackJackViewModel.restart()
         navController.popBackStack()
     }
-
+    // Inicializamos los distintos observers que vamos a usar
     val nombre1: String by blackJackViewModel.nombre1.observeAsState(initial = "haz click para editar tu nombre")
     val nombre2: String by blackJackViewModel.nombre2.observeAsState(initial = "haz click para editar tu nombre")
     val mano1: MutableList<Carta> by blackJackViewModel.mano1.observeAsState(initial = mutableListOf())
     val mano2: MutableList<Carta> by blackJackViewModel.mano2.observeAsState(initial = mutableListOf())
-    val nombreEditado1: Boolean by blackJackViewModel.nombreEditado1.observeAsState(initial = false)
     val nombreEditado2: Boolean by blackJackViewModel.nombreEditado2.observeAsState(initial = false)
+    val nombreEditado1: Boolean by blackJackViewModel.nombreEditado1.observeAsState(initial = false)
     val plantado1: Boolean by blackJackViewModel.plantado1.observeAsState(initial = false)
     val plantado2: Boolean by blackJackViewModel.plantado2.observeAsState(initial = false)
     val puntos1: Int by blackJackViewModel.puntos1.observeAsState(initial = 0)
@@ -72,6 +73,7 @@ fun BlackJack(
     val ganador: Int by blackJackViewModel.ganador.observeAsState(initial = 0)
     val barajaSize : Int by blackJackViewModel.barajaSize.observeAsState(initial = 52)
     val restart : Int by blackJackViewModel.restart.observeAsState(initial = 0)
+    val turno: Int by blackJackViewModel.turno.observeAsState(initial = 1)
 
     // ---------------------------------- Columna principal ------------
     Column(
@@ -83,10 +85,13 @@ fun BlackJack(
             ),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        //Comprobamos si hay ganador cada vez que se pinta de nuevo la pantalla
         if(ganador == 1){
             Ganador(blackJackViewModel = blackJackViewModel, nombre = nombre1)
         }else if(ganador == 2){
             Ganador(blackJackViewModel = blackJackViewModel, nombre = nombre2)
+        }else if(ganador == 3){
+            Empate(blackJackViewModel = blackJackViewModel)
         }
         Row(  // ------------------- Fila cartas y puntos --------------------
             Modifier
@@ -128,30 +133,36 @@ fun BlackJack(
                 .fillMaxWidth()
         ) {
             // --------------------- botones jugador1 ---------------------------
-            JuegaJugador(0.5f,
+            JuegaJugador(1,
+                0.5f,
                 onDameCartaClick = {
                     blackJackViewModel.dameCarta(1)
                     blackJackViewModel.sumaRestart()
                     blackJackViewModel.winBet(puntos1,puntos2,plantado1,plantado2)
                 },
                 onPass = {
-                    blackJackViewModel.plantarse(1)
+                    blackJackViewModel.plantarse(1, turno)
+                    blackJackViewModel.sumaRestart()
                     blackJackViewModel.winBet(puntos1,puntos2,plantado1,plantado2)
                 },
-                restart = restart
+                restart = restart,
+                turno = turno
             )
             // --------------------- botones jugador2 ---------------------------
-            JuegaJugador(1f,
+            JuegaJugador(2,
+                1f,
                 onDameCartaClick = {
                     blackJackViewModel.dameCarta(2)
                     blackJackViewModel.sumaRestart()
                     blackJackViewModel.winBet(puntos1,puntos2,plantado1,plantado2)
                 },
                 onPass = {
-                    blackJackViewModel.plantarse(2)
+                    blackJackViewModel.plantarse(2, turno)
+                    blackJackViewModel.sumaRestart()
                     blackJackViewModel.winBet(puntos1,puntos2,plantado1,plantado2)
                 },
-                restart = restart
+                restart = restart,
+                turno = turno
             )
         }
         BotonRestart(restart = restart,
@@ -176,6 +187,7 @@ fun MuestraMano(nombreEditado: Boolean, nombre: String, mano: MutableList<Carta>
     Box(modifier = Modifier
         .fillMaxHeight(0.7f)
         .fillMaxWidth()) {
+        //Si el nombre no ha sido editado muestra un alertDialog para editarlo
         if(!nombreEditado){
             EditaNombre(blackJackViewModel = blackJackViewModel, num = num)
         }else {
@@ -224,11 +236,13 @@ fun MuestraMano(nombreEditado: Boolean, nombre: String, mano: MutableList<Carta>
 @Suppress("UNUSED_PARAMETER")
 @Composable
 fun JuegaJugador(
+    jugador: Int,
     ancho: Float,
     restart: Int,
     onDameCartaClick: () -> Unit,
     onPass: () -> Unit,
-) {
+    turno: Int
+) { // -------------------- Columna principal -------------------
     Column(
         Modifier
             .padding(top = 20.dp)
@@ -242,9 +256,11 @@ fun JuegaJugador(
         ) {
             // --------------------------- Botón de dame carta ----------------------------
             Button(modifier = Modifier.wrapContentSize(),
-                colors = ButtonDefaults.buttonColors(Color.Black),
+                //Cuando no es el turno del jugador el botón aparece de color rojo
+                colors = if (turno == jugador) ButtonDefaults.buttonColors(Color.Black)
+                else ButtonDefaults.buttonColors(Color.Red),
                 shape = CutCornerShape(5.dp),
-                onClick = { onDameCartaClick() }
+                onClick = { onDameCartaClick() },
             ) {
                 Text(text = "Dame una carta ")
             }
@@ -257,7 +273,9 @@ fun JuegaJugador(
         ) {
             // --------------------------- Botón para plantarse ----------------------------
             Button(modifier = Modifier.wrapContentSize(),
-                colors = ButtonDefaults.buttonColors(Color.Black),
+                //Cuando no es el turno del jugador el botón aparece de color rojo
+                colors = if (turno == jugador) ButtonDefaults.buttonColors(Color.Black)
+                else ButtonDefaults.buttonColors(Color.Red),
                 shape = CutCornerShape(5.dp),
                 onClick = { onPass() }
             ) {
@@ -319,8 +337,9 @@ fun BotonRestart(
 fun EditaNombre(blackJackViewModel: BlackJackViewModel, num: Int){
     var  nuevoNombre by rememberSaveable{ mutableStateOf("") }
     AlertDialog(
+        // Si pulsamos fuera asigna un valor predeterminado
         onDismissRequest = {
-           blackJackViewModel.cambiaNombre("", num)
+           blackJackViewModel.cambiaNombre("jugador", num)
         },
         title = {
             Text("Nombre del jugador $num")
@@ -334,6 +353,7 @@ fun EditaNombre(blackJackViewModel: BlackJackViewModel, num: Int){
                 modifier = Modifier.fillMaxWidth(),
             )
         },
+        // Al confirmar actualiza el nombre del jugador
         confirmButton = {
             Button(
                 onClick = {
@@ -345,6 +365,10 @@ fun EditaNombre(blackJackViewModel: BlackJackViewModel, num: Int){
         }
     )
 }
+
+/**
+ * Composable que muestra el ganador de la partida
+ */
 @Composable
 fun Ganador(blackJackViewModel: BlackJackViewModel, nombre: String){
     AlertDialog(
@@ -370,43 +394,38 @@ fun Ganador(blackJackViewModel: BlackJackViewModel, nombre: String){
         }
     )
 }
-/*
-Pasado a estados, falta determinar ganador y actualizar fichas
-  REVISAR NO FUNCIONA
-    victoria = winBet(jugador1, jugador2, banca, apuesta)
-    if (victoria){
-        winBet(jugador1, jugador2, banca, apuesta)
-        }
 
-  REVISAR NO FUNCIONA
-    victoria = winBet(jugador1, jugador2, banca, apuesta)
-    if (victoria){
-        winBet(jugador1, jugador2, banca, apuesta)
-        }
-
-        /**
- * @return devuelve los puntos de una lista de cartas
- * @see Carta
+/**
+ * Composable que se muestra cuando hay un empate en la partida
  */
-fun calculaPuntos(mano: MutableList<Carta>):Int{
-    var puntos = 0
-    if(mano.isNotEmpty()) {
-        for (i in mano) {
-            if (puntos + i.puntosMax <= 21) {
-                puntos += i.puntosMax
-            } else {
-                puntos += i.puntosMin
+@Composable
+fun Empate(blackJackViewModel: BlackJackViewModel){
+    AlertDialog(
+        onDismissRequest = {
+            blackJackViewModel.restart()
+        },
+        title = {
+            Text("Resultado: ")
+        },
+        text = {
+            Text(
+                text = "Empate"
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    blackJackViewModel.restart()
+                }
+            ) {
+                Text("Aceptar")
             }
         }
-    }
-    return puntos
+    )
 }
 
- fun reiniciarValores(lista1: MutableList<Carta>, lista2: MutableList<Carta>){
-        lista1.clear()
-        lista2.clear()
-    }
- */
+
+
 
 
 
