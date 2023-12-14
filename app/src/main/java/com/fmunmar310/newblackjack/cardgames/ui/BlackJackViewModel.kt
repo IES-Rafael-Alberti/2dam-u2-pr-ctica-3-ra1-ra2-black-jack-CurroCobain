@@ -258,9 +258,9 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
 
     /**
      * Función para calcular quién ha ganado la partida
-     * @return devuelve un int que indica el ganador de la partida
      * 1 -> jugador 1 gana
      * 2 -> jugador 2 gana
+     * 3-> Empate
      */
     fun winBet(puntos1: Int, puntos2: Int, plantado1: Boolean, plantado2: Boolean){
         if(puntos1 == 21) {
