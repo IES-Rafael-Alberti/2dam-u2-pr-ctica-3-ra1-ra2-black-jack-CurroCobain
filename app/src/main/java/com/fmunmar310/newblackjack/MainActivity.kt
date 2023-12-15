@@ -8,9 +8,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.fmunmar310.newblackjack.cardgames.data.Routes
 import com.fmunmar310.newblackjack.cardgames.ui.BlackJackViewModel
 import com.fmunmar310.newblackjack.cardgames.ui.CartaMasAltaViewModel
@@ -19,7 +23,7 @@ import com.fmunmar310.newblackjack.ui.theme.NewBlackJackTheme
 
 class MainActivity : ComponentActivity() {
     private val cartaMasAltaViewModel: CartaMasAltaViewModel by viewModels()
-    private val blackJackViewModel : BlackJackViewModel by viewModels()
+    private val blackJackViewModel: BlackJackViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -30,7 +34,6 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val navController = rememberNavController()
-
                     NavHost(
                         navController = navController,
                         startDestination = Routes.Inicio.route
@@ -50,6 +53,17 @@ class MainActivity : ComponentActivity() {
                             BlackJack(
                                 navController = navController,
                                 blackJackViewModel = blackJackViewModel
+                            )
+                        }
+                        composable(Routes.VsMAquina.route) {
+                            BlackJackMk(
+                                navController = navController,
+                                blackJackViewModel = blackJackViewModel
+                            )
+                        }
+                        composable(Routes.ModosDeJuegoBlack.route) {
+                            ModosJuegoBlack(
+                                navController = navController
                             )
                         }
                     }

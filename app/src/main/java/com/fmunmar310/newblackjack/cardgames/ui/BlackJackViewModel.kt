@@ -9,6 +9,12 @@ import androidx.lifecycle.MutableLiveData
 import com.fmunmar310.newblackjack.cardgames.data.Baraja
 import com.fmunmar310.newblackjack.cardgames.data.Carta
 
+/*
+Tras mucho darle vueltas he decidido que la mejor opción era hacer sólo una vewModel que gestionara
+dos vistas distintas ya que tenían muchos métodos en común y me ha parecido lo más práctico
+la partida contra la IA funciona pulsando el botón de "Turno de la Máquina"
+ */
+
 /**
  * @property context indica el contexto de la app
  * @property _puntos1 almacena los puntos del jugador 1
@@ -44,53 +50,54 @@ import com.fmunmar310.newblackjack.cardgames.data.Carta
 
 class BlackJackViewModel (application: Application): AndroidViewModel(application) {
     @SuppressLint("StaticFieldLeak")
-    private val context = getApplication<Application>().applicationContext
+    protected val context = getApplication<Application>().applicationContext
 
-    private val _puntos1  = MutableLiveData<Int>()
+    protected val _puntos1  = MutableLiveData<Int>()
     val puntos1 : LiveData<Int> = _puntos1
 
-    private val _mano1 = MutableLiveData<MutableList<Carta>>()
+    protected val _mano1 = MutableLiveData<MutableList<Carta>>()
     val mano1 : LiveData<MutableList<Carta>> = _mano1
 
-    private val _puntos2  = MutableLiveData<Int>()
+    protected val _puntos2  = MutableLiveData<Int>()
     val puntos2 : LiveData<Int> = _puntos2
 
-    private val _mano2 = MutableLiveData<MutableList<Carta>>()
+    protected val _mano2 = MutableLiveData<MutableList<Carta>>()
     val mano2 : LiveData<MutableList<Carta>> = _mano2
 
-    private val _nombre1 = MutableLiveData<String>()
+    protected val _nombre1 = MutableLiveData<String>()
     val nombre1: LiveData<String> = _nombre1
 
-    private val _nombreEditado1 = MutableLiveData<Boolean>()
+    protected val _nombreEditado1 = MutableLiveData<Boolean>()
     val nombreEditado1: LiveData<Boolean> = _nombreEditado1
 
-    private val _nombreEditado2 = MutableLiveData<Boolean>()
+    protected val _nombreEditado2 = MutableLiveData<Boolean>()
     val nombreEditado2: LiveData<Boolean> = _nombreEditado2
 
-    private val _nombre2 = MutableLiveData<String>()
+    protected val _nombre2 = MutableLiveData<String>()
     val nombre2: LiveData<String> = _nombre2
 
-    private val _plantado1 = MutableLiveData<Boolean>()
+    protected val _plantado1 = MutableLiveData<Boolean>()
     val plantado1: LiveData<Boolean> = _plantado1
 
-    private val _plantado2 = MutableLiveData<Boolean>()
+    protected val _plantado2 = MutableLiveData<Boolean>()
     val plantado2: LiveData<Boolean> = _plantado2
 
-    private val _ganador = MutableLiveData<Int>()
+    protected val _ganador = MutableLiveData<Int>()
     val ganador : LiveData<Int> = _ganador
 
-    private val miBaraja = Baraja
+    protected val miBaraja = Baraja
 
     //Se utiliza para forzar la actualización de la pantalla
-    private  val _barajaSize = MutableLiveData<Int>()
+    protected  val _barajaSize = MutableLiveData<Int>()
     val barajaSize : LiveData<Int> = _barajaSize
 
     //Se utiliza para forzar la actualización de la pantalla
-    private val _restart = MutableLiveData<Int>()
+    protected val _restart = MutableLiveData<Int>()
     val restart : LiveData<Int> = _restart
 
-    private val _turno = MutableLiveData<Int>()
+    protected val _turno = MutableLiveData<Int>()
     val turno : LiveData<Int> = _turno
+
 
     // Inicializamos los valores necesarios para el funcionamiento del juego
     init {
@@ -145,7 +152,7 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
                 _mano1.value?.add(nuevaCarta!!)
                 //Se calculan los puntos del jugador con la carta nueva añadida a su mano
                 _puntos1.value = calculaPuntos(_mano1.value!!)
-                _turno.value = if (!_plantado2.value!!) 2 else  1
+                cambiaTurno(1)
             } else {
                 //Si el jugador está plantado se manda un mensaje de error
                 toasted("El jugador está plantado")
@@ -156,7 +163,7 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
                 _mano2.value?.add(nuevaCarta!!)
                 //Se calculan los puntos del jugador con la carta nueva añadida a su mano
                 _puntos2.value = calculaPuntos(_mano2.value!!)
-                _turno.value = if (!_plantado2.value!!) 1 else  2
+                cambiaTurno(2)
             } else {
                 //Si el jugador está plantado se manda un mensaje de error
                 toasted("El jugador está plantado")
@@ -166,6 +173,17 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         }
         //Se actualiza el número de cartas restantes en la baraja
         _barajaSize.value = miBaraja.size
+    }
+
+    /**
+     * Función que cambia el turno entre jugadores
+     */
+    fun cambiaTurno(turno: Int){
+        when (turno){
+            1-> _turno.value = if (!_plantado2.value!!) 2 else  1
+            2-> _turno.value = if (!_plantado1.value!!) 1 else  2
+        }
+        sumaRestart()
     }
 
     /**
@@ -234,7 +252,7 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
      * @param mano indica la lista de cartas
      * @return devuelve el total de puntos de dicha lista de cartas
      */
-    private fun calculaPuntos(mano: MutableList<Carta> ): Int {
+    fun calculaPuntos(mano: MutableList<Carta> ): Int {
         var puntos = 0
         if (mano.isNotEmpty()) {
             for (i in mano) {
@@ -252,7 +270,7 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
     /**
      * Función para mostrar un mensaje de error
      */
-    private fun toasted(mensaje: String){
+    fun toasted(mensaje: String){
         Toast.makeText(context, mensaje, Toast.LENGTH_SHORT).show()
     }
 
@@ -280,5 +298,36 @@ class BlackJackViewModel (application: Application): AndroidViewModel(applicatio
         }else{
             _ganador.value = 0
         }
+    }
+
+    /**
+     * Función para cambiar el nombre en la versión vs la máquina
+     */
+    fun cambiaNombreMk(nuevoNombre: String, num: Int){
+        if(num == 1){
+            //Cambiamos el nombre del jugador
+            _nombre1.value = nuevoNombre
+            //Actualizamos el valor de _nombreEditado1 a true
+            _nombreEditado1.value = true
+        }else if(num == 2){
+            //Cambiamos el nombre del jugador
+            _nombre2.value = "Skynet"
+            //Actualizamos el valor de _nombreEditado2 a true
+            _nombreEditado2.value = true
+        }
+    }
+
+    /**
+     * Función que actua como IA de la máquina
+     */
+    fun juegaMaquina(){
+        if(_puntos2.value!! < 18){
+            dameCarta(2)
+            winBet(_puntos1.value!!,_puntos2.value!!,_plantado1.value!!,_plantado2.value!!)
+        }else if(_puntos2.value == 18){
+            plantarse(2,2)
+            winBet(_puntos1.value!!,_puntos2.value!!,_plantado1.value!!,_plantado2.value!!)
+        }
+        sumaRestart()
     }
 }

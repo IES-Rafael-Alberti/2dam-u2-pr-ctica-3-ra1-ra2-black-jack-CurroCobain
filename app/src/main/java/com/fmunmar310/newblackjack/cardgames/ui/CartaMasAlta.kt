@@ -36,30 +36,37 @@ import androidx.compose.ui.platform.LocalContext
 fun CartaMasAlta(
     navController: NavController,
     cartaMasAltaViewModel: CartaMasAltaViewModel
-){
+) {
     BackHandler {
         cartaMasAltaViewModel.restart()
         navController.popBackStack()
     }
-    val miCarta: String by cartaMasAltaViewModel.imageId.observeAsState(initial= "")
+    val miCarta: String by cartaMasAltaViewModel.imageId.observeAsState(initial = "")
     //Columna con una imagen , dos botones  y un texto que muestra el número de cartas que quedan en la baraja
-    Column( modifier = Modifier
-        .fillMaxSize()
-        .paint(
-            painter = painterResource(id = LocalContext.current.resources.getIdentifier(
-                "casino",
-                "drawable",
-                LocalContext.current.packageName
-            )),
-            contentScale = ContentScale.FillHeight
-        ),
-        horizontalAlignment = Alignment.CenterHorizontally)
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .paint(
+                painter = painterResource(
+                    id = LocalContext.current.resources.getIdentifier(
+                        "casino",
+                        "drawable",
+                        LocalContext.current.packageName
+                    )
+                ),
+                contentScale = ContentScale.FillHeight
+            ),
+        horizontalAlignment = Alignment.CenterHorizontally
+    )
     {
-        Image(painter = painterResource(id = LocalContext.current.resources.getIdentifier(
-            "c$miCarta",
-            "drawable",
-            LocalContext.current.packageName
-        )),
+        Image(
+            painter = painterResource(
+                id = LocalContext.current.resources.getIdentifier(
+                    "c$miCarta",
+                    "drawable",
+                    LocalContext.current.packageName
+                )
+            ),
             contentDescription = "Carta mostrada",
             modifier = Modifier
                 .height(600.dp)
@@ -70,7 +77,7 @@ fun CartaMasAlta(
                 .padding(top = 25.dp)
                 .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center
-        ){ // Botones de dame carta y reiniciar
+        ) { // Botones de dame carta y reiniciar
             Button(
                 onClick = {
                     cartaMasAltaViewModel.dameCartaId()
@@ -85,15 +92,18 @@ fun CartaMasAlta(
                 Text("Reiniciar ")
             }
         }
-        Row(modifier = Modifier.padding(top = 50.dp),
+        Row(
+            modifier = Modifier.padding(top = 50.dp),
             horizontalArrangement = Arrangement.Center
-            ){
+        ) {
             // Texto que indica cuantas cartas quedan en la baraja
-            Text(text = "Quedan ${cartaMasAltaViewModel.restoDeCartas()} cartas en la baraja",
+            Text(
+                text = "Quedan ${cartaMasAltaViewModel.restoDeCartas()} cartas en la baraja",
                 modifier = Modifier
                     .background(color = Color.White),
                 fontSize = 20.sp
-                )
+            )
         }
     }
 }
+
